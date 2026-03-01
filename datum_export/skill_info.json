@@ -1,0 +1,11 @@
+[
+  { "SkillId": 2001, "SkillName": "普通攻击", "Cooldown": 1000, "Cost": 0 },
+  { "SkillId": 2002, "SkillName": "重击", "Cooldown": 4000, "Cost": 0 },
+  { "SkillId": 2003, "SkillName": "连斩", "Cooldown": 6000, "Cost": 0 },
+  { "SkillId": 2004, "SkillName": "终结斩", "Cooldown": 10000, "Cost": 0 },
+  { "SkillId": 3001, "SkillName": "远程射击", "Cooldown": 2000, "Cost": 0 },
+  { "SkillId": 3002, "SkillName": "精准狙击", "Cooldown": 8000, "Cost": 0 },
+  { "SkillId": 4001, "SkillName": "Boss普攻", "Cooldown": 1500, "Cost": 0 },
+  { "SkillId": 4002, "SkillName": "Boss范围攻击", "Cooldown": 5000, "Cost": 0 },
+  { "SkillId": 4003, "SkillName": "Boss终结技", "Cooldown": 15000, "Cost": 0 }
+]

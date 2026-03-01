@@ -1,0 +1,60 @@
+[
+  {
+    "SkillId": 2001,
+    "HitPoints": [
+      { "Frame": 8, "DamageRatio": 10000, "StaggerValue": 0 }
+    ]
+  },
+  {
+    "SkillId": 2002,
+    "HitPoints": [
+      { "Frame": 12, "DamageRatio": 18000, "StaggerValue": 1000 },
+      { "Frame": 18, "DamageRatio": 8000, "StaggerValue": 500 }
+    ]
+  },
+  {
+    "SkillId": 2003,
+    "HitPoints": [
+      { "Frame": 6, "DamageRatio": 8000, "StaggerValue": 0 },
+      { "Frame": 12, "DamageRatio": 8000, "StaggerValue": 0 },
+      { "Frame": 18, "DamageRatio": 10000, "StaggerValue": 800 }
+    ]
+  },
+  {
+    "SkillId": 2004,
+    "HitPoints": [
+      { "Frame": 20, "DamageRatio": 35000, "StaggerValue": 3000 }
+    ]
+  },
+  {
+    "SkillId": 3001,
+    "HitPoints": [
+      { "Frame": 15, "DamageRatio": 15000, "StaggerValue": 0 }
+    ]
+  },
+  {
+    "SkillId": 3002,
+    "HitPoints": [
+      { "Frame": 30, "DamageRatio": 45000, "StaggerValue": 2000 }
+    ]
+  },
+  {
+    "SkillId": 4001,
+    "HitPoints": [
+      { "Frame": 10, "DamageRatio": 12000, "StaggerValue": 500 }
+    ]
+  },
+  {
+    "SkillId": 4002,
+    "HitPoints": [
+      { "Frame": 15, "DamageRatio": 20000, "StaggerValue": 2000 },
+      { "Frame": 25, "DamageRatio": 15000, "StaggerValue": 1500 }
+    ]
+  },
+  {
+    "SkillId": 4003,
+    "HitPoints": [
+      { "Frame": 30, "DamageRatio": 60000, "StaggerValue": 10000 }
+    ]
+  }
+]

@@ -24,11 +24,16 @@ namespace Datum.Core.Provider
             LoadBlueprints(blueprintsJson);
         }
 
+        private static readonly JsonSerializerOptions _jsonOpts = new()
+        {
+            PropertyNameCaseInsensitive = true,
+            IncludeFields = true,
+        };
+
         private void LoadMonsters(string json)
         {
             if (string.IsNullOrEmpty(json)) return;
-            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-            _foeRows = JsonSerializer.Deserialize<List<DatumFoeRow>>(json, options) ?? new();
+            _foeRows = JsonSerializer.Deserialize<List<DatumFoeRow>>(json, _jsonOpts) ?? new();
             foreach (var row in _foeRows)
                 _foeMap[row.ConfigId] = row;
         }
@@ -36,8 +41,7 @@ namespace Datum.Core.Provider
         private void LoadSkillInfo(string json)
         {
             if (string.IsNullOrEmpty(json)) return;
-            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-            var rows = JsonSerializer.Deserialize<List<DatumSkillInfoRow>>(json, options) ?? new();
+            var rows = JsonSerializer.Deserialize<List<DatumSkillInfoRow>>(json, _jsonOpts) ?? new();
             foreach (var row in rows)
                 _skillInfoMap[row.SkillId] = row;
         }
@@ -45,8 +49,7 @@ namespace Datum.Core.Provider
         private void LoadBlueprints(string json)
         {
             if (string.IsNullOrEmpty(json)) return;
-            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-            var rows = JsonSerializer.Deserialize<List<DatumSkillBlueprint>>(json, options) ?? new();
+            var rows = JsonSerializer.Deserialize<List<DatumSkillBlueprint>>(json, _jsonOpts) ?? new();
             foreach (var bp in rows)
                 _blueprintMap[bp.SkillId] = bp;
         }

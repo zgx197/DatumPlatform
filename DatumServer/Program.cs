@@ -4,7 +4,12 @@ using Datum.Server.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 // ── 服务注册 ──────────────────────────────────────────────
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(opt =>
+    {
+        opt.JsonSerializerOptions.IncludeFields = true;
+        opt.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+    });
 builder.Services.AddSignalR();
 builder.Services.AddSingleton<DatumDataService>();
 builder.Services.AddHostedService<FileWatcherService>();

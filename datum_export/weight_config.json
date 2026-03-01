@@ -1,0 +1,13 @@
+{
+  "BaselineAtk": 1000,
+  "BaselineDef": 500,
+  "BaselineHP": 50000,
+  "WeightEHP": 0.35,
+  "WeightDPS": 0.40,
+  "WeightControl": 0.25,
+  "PowerMeanAlpha": 1.0,
+  "EnablePlayerBaseline": false,
+  "PlayerBaseAtk": 1000,
+  "PlayerBaseDef": 500,
+  "PlayerBaseHP": 10000
+}

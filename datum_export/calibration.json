@@ -1,0 +1,6 @@
+[
+  { "ConfigId": 10001, "Name": "迷宫守卫·初级", "SubjectiveScore": 2.5, "EHPNorm": 0.3, "DPSNorm": 0.4, "ControlNorm": 0.1 },
+  { "ConfigId": 10002, "Name": "迷宫守卫·中级", "SubjectiveScore": 5.0, "EHPNorm": 0.6, "DPSNorm": 0.7, "ControlNorm": 0.3 },
+  { "ConfigId": 10003, "Name": "迷宫守卫·高级", "SubjectiveScore": 7.5, "EHPNorm": 1.1, "DPSNorm": 1.2, "ControlNorm": 0.5 },
+  { "ConfigId": 30001, "Name": "精英Boss·试炼者", "SubjectiveScore": 9.5, "EHPNorm": 5.0, "DPSNorm": 4.0, "ControlNorm": 0.8 }
+]
