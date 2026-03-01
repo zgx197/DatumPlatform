@@ -1,9 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Card, Slider, Button, Typography, Space, Row, Col, Statistic, message, Table, Tag, Alert, Divider } from 'antd'
+import { Card, Slider, Button, Typography, Space, Row, Col, Statistic, message, Table, Tag, Alert, Divider, Progress } from 'antd'
+import { ThunderboltOutlined } from '@ant-design/icons'
 import { useState, useEffect, useMemo } from 'react'
 import ReactECharts from 'echarts-for-react'
 import { datumApi } from '../../api/datum'
-import type { WeightConfig, EntityScore } from '../../types/datum'
+import type { WeightConfig, EntityScore, CalibrationSample } from '../../types/datum'
 import { FOE_TYPE_LABELS, FOE_TYPE_COLORS } from '../../types/datum'
 
 const { Title, Text } = Typography
@@ -152,6 +153,127 @@ export default function WeightCalibration() {
           </Card>
         </>
       )}
+
+      <Divider style={{ margin: '4px 0' }}>最小二乘权重校准</Divider>
+      <CalibrationPanel onApply={(w) => { setLocal({ ...local!, ...w }); setPreviewScores(null) }} />
     </Space>
+  )
+}
+
+function CalibrationPanel({ onApply }: { onApply: (w: Partial<WeightConfig>) => void }) {
+  const [calibResult, setCalibResult] = useState<{
+    weightEHP: number; weightDPS: number; weightControl: number
+    scaleFactor: number; rSquared: number; mse: number; interpretation: string
+  } | null>(null)
+
+  const { data: samples = [] } = useQuery<CalibrationSample[]>({
+    queryKey: ['calibration-samples'],
+    queryFn: () => datumApi.calibrationSamples(),
+  })
+
+  const calibMutation = useMutation({
+    mutationFn: () => datumApi.runCalibration(),
+    onSuccess: (data) => setCalibResult(data),
+    onError: () => message.error('校准失败，样本数量不足（至少需要 3 条）'),
+  })
+
+  const scatterOpt = useMemo(() => {
+    if (!calibResult || samples.length === 0) return null
+    const { weightEHP, weightDPS, weightControl, scaleFactor } = calibResult
+    const pts = samples.map(s => {
+      const pred = scaleFactor * (weightEHP * s.ehpNorm + weightDPS * s.dpsNorm + weightControl * s.controlNorm) * 10
+      return [pred, s.subjectiveScore, s.name]
+    })
+    const maxVal = Math.max(...pts.flatMap(p => [p[0] as number, p[1] as number])) * 1.1
+    return {
+      backgroundColor: 'transparent',
+      tooltip: { trigger: 'item', formatter: (p: any) => `${p.data[2]}<br/>预测: ${(p.data[0] as number).toFixed(2)} | 主观: ${p.data[1]}` },
+      xAxis: { name: '预测评分', nameLocation: 'middle', nameGap: 28, min: 0, max: maxVal, axisLabel: { color: '#8b949e' }, splitLine: { lineStyle: { color: '#21262d' } } },
+      yAxis: { name: '主观评分', nameLocation: 'middle', nameGap: 36, min: 0, max: maxVal, axisLabel: { color: '#8b949e' }, splitLine: { lineStyle: { color: '#21262d' } } },
+      series: [
+        { type: 'line', data: [[0, 0], [maxVal, maxVal]], lineStyle: { color: '#444', type: 'dashed' }, symbol: 'none' },
+        { type: 'scatter', data: pts, symbolSize: 10, itemStyle: { color: '#4e9af1', opacity: 0.85 }, emphasis: { itemStyle: { color: '#f1c04e' } } },
+      ],
+    }
+  }, [calibResult, samples])
+
+  return (
+    <Card
+      size="small"
+      title="权重自动校准（最小二乘法）"
+      extra={
+        <Button
+          type="primary"
+          size="small"
+          icon={<ThunderboltOutlined />}
+          loading={calibMutation.isPending}
+          onClick={() => calibMutation.mutate()}
+          disabled={samples.length < 3}
+        >
+          一键校准（{samples.length} 条样本）
+        </Button>
+      }
+    >
+      {samples.length < 3 && (
+        <Alert type="info" showIcon
+          message="需要至少 3 条校准样本才能运行自动校准"
+          description="请在 calibration.json 中添加主观评分样本"
+          style={{ marginBottom: 12 }}
+        />
+      )}
+
+      {calibResult && (
+        <>
+          <Row gutter={16} style={{ marginBottom: 12 }}>
+            <Col span={6}>
+              <Card size="small" title="推荐 EHP 权重">
+                <div style={{ fontSize: 20, fontWeight: 700, color: '#4e9af1' }}>{(calibResult.weightEHP * 100).toFixed(0)}%</div>
+              </Card>
+            </Col>
+            <Col span={6}>
+              <Card size="small" title="推荐 DPS 权重">
+                <div style={{ fontSize: 20, fontWeight: 700, color: '#f1924e' }}>{(calibResult.weightDPS * 100).toFixed(0)}%</div>
+              </Card>
+            </Col>
+            <Col span={6}>
+              <Card size="small" title="推荐控制权重">
+                <div style={{ fontSize: 20, fontWeight: 700, color: '#7ec94e' }}>{(calibResult.weightControl * 100).toFixed(0)}%</div>
+              </Card>
+            </Col>
+            <Col span={6}>
+              <Card size="small" title="拟合度 R²">
+                <Progress
+                  type="circle" size={60}
+                  percent={Math.round(calibResult.rSquared * 100)}
+                  strokeColor={calibResult.rSquared >= 0.7 ? '#7ec94e' : '#f1c04e'}
+                />
+              </Card>
+            </Col>
+          </Row>
+
+          <Alert
+            type={calibResult.rSquared >= 0.7 ? 'success' : 'warning'}
+            showIcon
+            message={calibResult.interpretation}
+            description={`MSE: ${calibResult.mse.toFixed(4)} | 缩放因子: ${calibResult.scaleFactor.toFixed(3)}`}
+            style={{ marginBottom: 12 }}
+          />
+
+          {scatterOpt && <ReactECharts option={scatterOpt} style={{ height: 240 }} />}
+
+          <Button
+            type="primary"
+            onClick={() => onApply({
+              weightEHP: calibResult.weightEHP,
+              weightDPS: calibResult.weightDPS,
+              weightControl: calibResult.weightControl,
+            })}
+            style={{ marginTop: 12 }}
+          >
+            应用推荐权重到滑块
+          </Button>
+        </>
+      )}
+    </Card>
   )
 }

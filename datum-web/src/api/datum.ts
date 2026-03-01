@@ -33,6 +33,9 @@ export const datumApi = {
   calibrationSamples: (): Promise<CalibrationSample[]> =>
     api.get('/calibration/samples').then(r => r.data),
 
-  runCalibration: (): Promise<{ weightEHP: number; weightDPS: number; weightControl: number; r2: number; mse: number }> =>
+  runCalibration: (): Promise<{
+    weightEHP: number; weightDPS: number; weightControl: number
+    scaleFactor: number; rSquared: number; mse: number; interpretation: string
+  }> =>
     api.post('/calibration/run').then(r => r.data),
 }

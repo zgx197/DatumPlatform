@@ -1,12 +1,14 @@
 import { Layout, Menu, notification } from 'antd'
 import { useState, useEffect } from 'react'
 import { BrowserRouter, useNavigate, useLocation } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import {
   DashboardOutlined,
   ExperimentOutlined,
   ApartmentOutlined,
   SettingOutlined,
   BugOutlined,
+  EnvironmentOutlined,
 } from '@ant-design/icons'
 import * as signalR from '@microsoft/signalr'
 import AppRoutes from './routes/AppRoutes'
@@ -16,19 +18,21 @@ import './App.css'
 const { Sider, Content, Header } = Layout
 
 const NAV_ITEMS = [
-  { key: '/',              icon: <DashboardOutlined />,  label: '评分看板' },
-  { key: '/templates',     icon: <ApartmentOutlined />,  label: '模板分析' },
-  { key: '/calibration',  icon: <ExperimentOutlined />, label: '权重校准' },
-  { key: '/health',        icon: <BugOutlined />,        label: '数值健康' },
-  { key: '/settings',     icon: <SettingOutlined />,     label: '设置' },
+  { key: '/',             icon: <DashboardOutlined />,   label: '评分看板' },
+  { key: '/templates',    icon: <ApartmentOutlined />,   label: '模板分析' },
+  { key: '/levels',       icon: <EnvironmentOutlined />, label: '关卡视图' },
+  { key: '/calibration',  icon: <ExperimentOutlined />,  label: '权重调节' },
+  { key: '/health',       icon: <BugOutlined />,         label: '数值健康' },
+  { key: '/settings',     icon: <SettingOutlined />,      label: '设置' },
 ]
 
 function AppLayout() {
   const navigate = useNavigate()
   const location = useLocation()
+  const queryClient = useQueryClient()
   const [collapsed, setCollapsed] = useState(false)
 
-  // SignalR 实时数据更新
+  // SignalR 实时数据更新：文件变更后自动刷新所有查询
   useEffect(() => {
     const connection = new signalR.HubConnectionBuilder()
       .withUrl('/hubs/datum')
@@ -36,10 +40,15 @@ function AppLayout() {
       .build()
 
     connection.on('DataUpdated', () => {
+      queryClient.invalidateQueries({ queryKey: ['scores'] })
+      queryClient.invalidateQueries({ queryKey: ['templates'] })
+      queryClient.invalidateQueries({ queryKey: ['health'] })
+      queryClient.invalidateQueries({ queryKey: ['weights'] })
       notification.info({
-        message: '数据已更新',
-        description: '配置表数据已自动重载，请刷新查看最新评分。',
+        message: '数据已自动更新',
+        description: 'datum_export/ 文件变更，评分已重新计算。',
         duration: 4,
+        placement: 'bottomRight',
       })
     })
 
@@ -48,7 +57,7 @@ function AppLayout() {
     })
 
     return () => { connection.stop() }
-  }, [])
+  }, [queryClient])
 
   return (
     <Layout style={{ height: '100vh' }}>

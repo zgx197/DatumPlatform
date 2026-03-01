@@ -6,23 +6,23 @@ namespace Datum.Core.Calibrator
 {
     public class CalibrationSample
     {
-        public int ConfigId;
-        public string Name;
-        public float SubjectiveScore;   // 策划主观评分 1-10
-        public float EHPNorm;
-        public float DPSNorm;
-        public float ControlNorm;
+        public int ConfigId { get; set; }
+        public string Name { get; set; }
+        public float SubjectiveScore { get; set; }   // 策划主观评分 1-10
+        public float EHPNorm { get; set; }
+        public float DPSNorm { get; set; }
+        public float ControlNorm { get; set; }
     }
 
     public class CalibrationResult
     {
-        public float WeightEHP;
-        public float WeightDPS;
-        public float WeightControl;
-        public float ScaleFactor;
-        public float RSquared;
-        public float MSE;
-        public string Interpretation;
+        public float WeightEHP { get; set; }
+        public float WeightDPS { get; set; }
+        public float WeightControl { get; set; }
+        public float ScaleFactor { get; set; }
+        public float RSquared { get; set; }
+        public float MSE { get; set; }
+        public string Interpretation { get; set; }
     }
 
     /// <summary>
