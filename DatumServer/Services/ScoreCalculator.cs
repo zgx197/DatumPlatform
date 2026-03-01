@@ -35,7 +35,7 @@ namespace Datum.Server.Services
                     snapshot.Metadata.NorAttackSkillId,
                     resolved.FinalAtk, provider);
                 var metrics  = CombatMetricsCalculator.Calculate(
-                    resolved, weightConfig.BaselineAtk, weightConfig.BaselineDef, skill);
+                    resolved, weightConfig.baseline_atk, weightConfig.baseline_def, skill);
                 return ScoreAggregator.Aggregate(metrics, snapshot.Metadata, weightConfig);
             }
             catch

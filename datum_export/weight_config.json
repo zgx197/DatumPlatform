@@ -1,13 +1,19 @@
-{
-  "BaselineAtk": 1000,
-  "BaselineDef": 500,
-  "BaselineHP": 50000,
-  "WeightEHP": 0.35,
-  "WeightDPS": 0.40,
-  "WeightControl": 0.25,
-  "PowerMeanAlpha": 1.0,
-  "EnablePlayerBaseline": false,
-  "PlayerBaseAtk": 1000,
-  "PlayerBaseDef": 500,
-  "PlayerBaseHP": 10000
+﻿{
+    "baseline_atk": 1000.0,
+    "baseline_def": 500.0,
+    "baseline_hp": 5000.0,
+    "baseline_ehp": 10000.0,
+    "baseline_dps": 300.0,
+    "baseline_control": 5000.0,
+    "survival_weight": 0.4000000059604645,
+    "damage_weight": 0.4000000059604645,
+    "control_weight": 0.20000000298023225,
+    "power_mean_alpha": 0.0,
+    "normal_bonus": 1.0,
+    "elite_bonus": 1.5,
+    "boss_bonus": 2.5,
+    "enable_player_baseline": false,
+    "player_base_atk": 2000.0,
+    "player_base_def": 800.0,
+    "player_base_hp": 10000.0
 }

@@ -16,13 +16,13 @@ namespace Datum.Core.Calibrator
 
     public class CalibrationResult
     {
-        public float WeightEHP { get; set; }
-        public float WeightDPS { get; set; }
-        public float WeightControl { get; set; }
-        public float ScaleFactor { get; set; }
-        public float RSquared { get; set; }
-        public float MSE { get; set; }
-        public string Interpretation { get; set; }
+        public float survival_weight { get; set; }
+        public float damage_weight { get; set; }
+        public float control_weight { get; set; }
+        public float scaleFactor { get; set; }
+        public float rSquared { get; set; }
+        public float mse { get; set; }
+        public string interpretation { get; set; }
     }
 
     /// <summary>
@@ -100,13 +100,13 @@ namespace Datum.Core.Calibrator
 
             return new CalibrationResult
             {
-                WeightEHP     = weightEHP,
-                WeightDPS     = weightDPS,
-                WeightControl = weightControl,
-                ScaleFactor   = scaleFactor,
-                RSquared      = rSquared,
-                MSE           = mse,
-                Interpretation = InterpretRSquared(rSquared),
+                survival_weight = weightEHP,
+                damage_weight   = weightDPS,
+                control_weight  = weightControl,
+                scaleFactor     = scaleFactor,
+                rSquared        = rSquared,
+                mse             = mse,
+                interpretation  = InterpretRSquared(rSquared),
             };
         }
 

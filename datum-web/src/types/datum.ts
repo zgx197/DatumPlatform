@@ -7,21 +7,27 @@ export interface EntityScore {
   ehpScore: number
   dpsScore: number
   controlScore: number
-  normalizedValues: { EHP: number; DPS: number; Control: number }
+  normalizedValues: { EHP_norm: number; DPS_norm: number; Control_norm: number }
 }
 
 export interface WeightConfig {
-  baselineAtk: number
-  baselineDef: number
-  baselineHP: number
-  weightEHP: number
-  weightDPS: number
-  weightControl: number
-  powerMeanAlpha: number
-  enablePlayerBaseline: boolean
-  playerBaseAtk: number
-  playerBaseDef: number
-  playerBaseHP: number
+  baseline_atk: number
+  baseline_def: number
+  baseline_hp: number
+  baseline_ehp: number
+  baseline_dps: number
+  baseline_control: number
+  survival_weight: number
+  damage_weight: number
+  control_weight: number
+  power_mean_alpha: number
+  normal_bonus: number
+  elite_bonus: number
+  boss_bonus: number
+  enable_player_baseline: boolean
+  player_base_atk: number
+  player_base_def: number
+  player_base_hp: number
 }
 
 export interface TemplateVariant {
@@ -73,11 +79,13 @@ export interface CalibrationSample {
 
 export const FOE_TYPE_LABELS: Record<number, string> = {
   0: '未知',
-  1: '近战',
+  1: '杂兵',
   2: '远程',
-  3: '精英',
+  3: '特殊',
   4: 'Boss',
-  5: '杂兵',
+  5: '精英',
+  6: '特殊',
+  9: '靶子',
 }
 
 export const FOE_TYPE_COLORS: Record<number, string> = {

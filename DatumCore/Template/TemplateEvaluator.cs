@@ -43,7 +43,7 @@ namespace Datum.Core.Template
                 snapshot.Metadata.NorAttackSkillId,
                 resolved.FinalAtk, provider);
             var metrics  = CombatMetricsCalculator.Calculate(
-                resolved, weightConfig.BaselineAtk, weightConfig.BaselineDef, skill);
+                resolved, weightConfig.baseline_atk, weightConfig.baseline_def, skill);
             var score    = ScoreAggregator.Aggregate(metrics, snapshot.Metadata, weightConfig);
 
             return score.OverallScore;

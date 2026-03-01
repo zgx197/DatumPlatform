@@ -1,6 +1,26 @@
-[
-  { "ConfigId": 10001, "Name": "迷宫守卫·初级", "SubjectiveScore": 2.5, "EHPNorm": 0.3, "DPSNorm": 0.4, "ControlNorm": 0.1 },
-  { "ConfigId": 10002, "Name": "迷宫守卫·中级", "SubjectiveScore": 5.0, "EHPNorm": 0.6, "DPSNorm": 0.7, "ControlNorm": 0.3 },
-  { "ConfigId": 10003, "Name": "迷宫守卫·高级", "SubjectiveScore": 7.5, "EHPNorm": 1.1, "DPSNorm": 1.2, "ControlNorm": 0.5 },
-  { "ConfigId": 30001, "Name": "精英Boss·试炼者", "SubjectiveScore": 9.5, "EHPNorm": 5.0, "DPSNorm": 4.0, "ControlNorm": 0.8 }
+﻿[
+  {"config_id":100603,"name":"蜘蛛1","subjective_score":5.0,"ehp_norm":1.0245901346206666,"dps_norm":0.6158024668693543,"control_norm":0.0004000160261057317},
+  {"config_id":100803,"name":"蜘蛛","subjective_score":5.0,"ehp_norm":1.2941176891326905,"dps_norm":0.7804937958717346,"control_norm":0.0004000160261057317},
+  {"config_id":103101,"name":"骷髅1","subjective_score":5.0,"ehp_norm":0.02213279716670513,"dps_norm":0.28205129504203799,"control_norm":0.0004000160261057317},
+  {"config_id":100704,"name":"骷髅王","subjective_score":5.0,"ehp_norm":18.784530639648439,"dps_norm":1.2538888454437256,"control_norm":0.0005600000149570406},
+  {"config_id":651104,"name":"骷髅王","subjective_score":5.0,"ehp_norm":0.42835667729377749,"dps_norm":0.2644444406032562,"control_norm":0.0005600000149570406},
+  {"config_id":101004,"name":"骷髅王","subjective_score":5.0,"ehp_norm":29.00114631652832,"dps_norm":1.6690276861190797,"control_norm":0.0005600000149570406},
+  {"config_id":102705,"name":"骷髅战将","subjective_score":5.0,"ehp_norm":0.1515151560306549,"dps_norm":0.23076924681663514,"control_norm":0.0005600000149570406},
+  {"config_id":100707,"name":"吸血鬼王","subjective_score":5.0,"ehp_norm":11.752137184143067,"dps_norm":0.7722222208976746,"control_norm":0.0005600000149570406},
+  {"config_id":100706,"name":"吸血鬼精英","subjective_score":5.0,"ehp_norm":6.329113960266113,"dps_norm":0.7822222113609314,"control_norm":0.0005600000149570406},
+  {"config_id":201105,"name":"压迫者等级1","subjective_score":5.0,"ehp_norm":0.0024999999441206457,"dps_norm":0.005333333276212215,"control_norm":0.0},
+  {"config_id":200705,"name":"压迫者等级1","subjective_score":5.0,"ehp_norm":0.0024999999441206457,"dps_norm":0.005333333276212215,"control_norm":0.0},
+  {"config_id":201106,"name":"压迫者等级1","subjective_score":5.0,"ehp_norm":0.0024999999441206457,"dps_norm":0.005333333276212215,"control_norm":0.0},
+  {"config_id":100801,"name":"强盗","subjective_score":5.0,"ehp_norm":0.05143442377448082,"dps_norm":0.43666666746139529,"control_norm":1.5999999547489098e-8},
+  {"config_id":100602,"name":"吸血鬼1","subjective_score":5.0,"ehp_norm":0.21450458467006684,"dps_norm":0.29523807764053347,"control_norm":0.0004000160261057317},
+  {"config_id":101003,"name":"蜘蛛","subjective_score":5.0,"ehp_norm":1.5755970478057862,"dps_norm":0.9451852440834045,"control_norm":0.0004000160261057317},
+  {"config_id":102704,"name":"骷髅王","subjective_score":5.0,"ehp_norm":0.4610655903816223,"dps_norm":0.41333332657814028,"control_norm":0.0005600000149570406},
+  {"config_id":100404,"name":"骷髅王","subjective_score":5.0,"ehp_norm":10.615711212158204,"dps_norm":0.7201389074325562,"control_norm":0.0005600000149570406},
+  {"config_id":100804,"name":"骷髅王","subjective_score":5.0,"ehp_norm":23.35195541381836,"dps_norm":1.3788541555404664,"control_norm":0.0005600000149570406},
+  {"config_id":100906,"name":"熊精英","subjective_score":5.0,"ehp_norm":8.09679889678955,"dps_norm":0.6652252078056336,"control_norm":0.0005600000149570406},
+  {"config_id":103107,"name":"吸血鬼王","subjective_score":5.0,"ehp_norm":3.174603223800659,"dps_norm":0.6666666865348816,"control_norm":0.0005600000149570406},
+  {"config_id":102707,"name":"吸血鬼王","subjective_score":5.0,"ehp_norm":0.25183674693107607,"dps_norm":0.2370370477437973,"control_norm":0.0005600000149570406},
+  {"config_id":202703,"name":"压迫者等级1","subjective_score":5.0,"ehp_norm":0.0024999999441206457,"dps_norm":0.005333333276212215,"control_norm":0.0},
+  {"config_id":201004,"name":"压迫者等级1","subjective_score":5.0,"ehp_norm":0.0024999999441206457,"dps_norm":0.005333333276212215,"control_norm":0.0},
+  {"config_id":200504,"name":"压迫者等级1","subjective_score":5.0,"ehp_norm":0.0024999999441206457,"dps_norm":0.005333333276212215,"control_norm":0.0}
 ]

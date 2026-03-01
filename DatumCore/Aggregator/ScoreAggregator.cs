@@ -6,20 +6,32 @@ namespace Datum.Core.Aggregator
 {
     public class EvaluationWeightConfig
     {
-        public float BaselineAtk = 1000f;
-        public float BaselineDef = 500f;
-        public float BaselineHP  = 50000f;
+        // 基准属性
+        public float baseline_atk     = 1000f;
+        public float baseline_def     = 500f;
+        public float baseline_hp      = 5000f;
+        public float baseline_ehp     = 10000f;
+        public float baseline_dps     = 300f;
+        public float baseline_control = 5000f;
 
-        public float WeightEHP     = 0.35f;
-        public float WeightDPS     = 0.40f;
-        public float WeightControl = 0.25f;
+        // 权重
+        public float survival_weight = 0.4f;
+        public float damage_weight   = 0.4f;
+        public float control_weight  = 0.2f;
 
-        public float PowerMeanAlpha = 1f;
+        // 幂平均指数（0=几何平均）
+        public float power_mean_alpha = 0f;
 
-        public bool  EnablePlayerBaseline = false;
-        public float PlayerBaseAtk = 1000f;
-        public float PlayerBaseDef = 500f;
-        public float PlayerBaseHP  = 10000f;
+        // 类型加成
+        public float normal_bonus = 1.0f;
+        public float elite_bonus  = 1.5f;
+        public float boss_bonus   = 2.5f;
+
+        // 玩家基准（可选）
+        public bool  enable_player_baseline = false;
+        public float player_base_atk = 2000f;
+        public float player_base_def = 800f;
+        public float player_base_hp  = 10000f;
     }
 
     public static class ScoreAggregator
@@ -29,18 +41,23 @@ namespace Datum.Core.Aggregator
             SnapshotMetadata metadata,
             EvaluationWeightConfig cfg)
         {
-            // 归一化（以基准值为参考）
-            float baseEHP = CalcBaseEHP(cfg);
-            float baseDPS = cfg.BaselineAtk;
+            // 归一化（以 baseline_ehp / baseline_dps / baseline_control 为参考）
+            float ehpNorm     = cfg.baseline_ehp     > 0 ? metrics.EffectiveHP  / cfg.baseline_ehp     : 0f;
+            float dpsNorm     = cfg.baseline_dps     > 0 ? metrics.DPS          / cfg.baseline_dps     : 0f;
+            float controlNorm = cfg.baseline_control > 0 ? metrics.ControlScore / cfg.baseline_control : 0f;
 
-            float ehpNorm     = baseEHP  > 0 ? metrics.EffectiveHP  / baseEHP  : 0f;
-            float dpsNorm     = baseDPS  > 0 ? metrics.DPS          / baseDPS  : 0f;
-            float controlNorm = metrics.ControlScore;
+            // 类型加成系数
+            float typeBonus = metadata.FoeType switch
+            {
+                4 => cfg.boss_bonus,   // Boss
+                5 => cfg.elite_bonus,  // Elite
+                _ => cfg.normal_bonus,
+            };
 
             float overall = PowerMean(
                 new[] { ehpNorm, dpsNorm, controlNorm },
-                new[] { cfg.WeightEHP, cfg.WeightDPS, cfg.WeightControl },
-                cfg.PowerMeanAlpha);
+                new[] { cfg.survival_weight, cfg.damage_weight, cfg.control_weight },
+                cfg.power_mean_alpha) * typeBonus;
 
             var score = new EntityScore
             {
@@ -48,15 +65,15 @@ namespace Datum.Core.Aggregator
                 Name         = metadata.Name,
                 FoeType      = metadata.FoeType,
                 BarriesId    = metadata.BarriesId,
-                OverallScore = overall * 10f,   // 映射到 0-10 量纲
-                EHPScore     = ehpNorm  * 10f,
-                DPSScore     = dpsNorm  * 10f,
-                ControlScore = controlNorm * 10f,
+                OverallScore = overall,
+                EHPScore     = ehpNorm,
+                DPSScore     = dpsNorm,
+                ControlScore = controlNorm,
             };
 
-            score.NormalizedValues["EHP"]     = ehpNorm;
-            score.NormalizedValues["DPS"]     = dpsNorm;
-            score.NormalizedValues["Control"] = controlNorm;
+            score.NormalizedValues["EHP_norm"]     = ehpNorm;
+            score.NormalizedValues["DPS_norm"]     = dpsNorm;
+            score.NormalizedValues["Control_norm"] = controlNorm;
 
             return score;
         }
@@ -90,9 +107,9 @@ namespace Datum.Core.Aggregator
 
         private static float CalcBaseEHP(EvaluationWeightConfig cfg)
         {
-            float def = cfg.BaselineDef;
-            float atk = cfg.BaselineAtk;
-            float hp  = cfg.BaselineHP;
+            float def = cfg.baseline_def;
+            float atk = cfg.baseline_atk;
+            float hp  = cfg.baseline_hp;
             float reduction = def / (def + atk);
             return hp / (1f - reduction);
         }

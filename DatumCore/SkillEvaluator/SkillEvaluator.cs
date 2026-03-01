@@ -38,20 +38,21 @@ namespace Datum.Core.SkillEvaluator
 
                 foreach (var hp in blueprint.HitPoints)
                 {
-                    skillDamageRatio += hp.DamageRatio;
-                    skillFrames = System.Math.Max(skillFrames, hp.Frame);
-                    skillStagger += hp.StaggerValue;
+                    skillDamageRatio += hp.DamagePerMyriad;
+                    if (hp.CanAirborne || hp.CanKnockDown) skillStagger += 1f;
+                    else if (hp.CanStiffness) skillStagger += 0.3f;
                 }
 
-                float cooldownSec = info != null ? info.Cooldown / 1000f : 0f;
-                float durationSec = skillFrames / FPS;
-                float cycleSec = System.Math.Max(durationSec, cooldownSec);
+                // 技能循环时间 = 动作帧 + 冷却时间
+                float cooldownSec = info != null ? info.CooldownMs / 1000f : 0f;
+                float durationSec = blueprint.ContinuousFrames / FPS;
+                float cycleSec    = durationSec + cooldownSec;
 
                 if (cycleSec > 0)
                     totalDamageRatio += (skillDamageRatio / DamageRatioScale) / cycleSec;
 
-                // 控制覆盖（粗略估算：有控制打击点则累加）
-                if (skillStagger > 0) controlCoverage += 0.3f;
+                // 控制覆盖（有控制打击点则累加）
+                if (skillStagger > 0) controlCoverage += skillStagger * 0.2f;
             }
 
             float dps = baseAttack * totalDamageRatio;

@@ -53,9 +53,8 @@ namespace Datum.Core.Provider
     public class DatumSkillInfoRow
     {
         public int SkillId { get; set; }
-        public float Cooldown { get; set; }
-        public float Cost { get; set; }
-        public string SkillName { get; set; }
+        public string Name { get; set; }
+        public int CooldownMs { get; set; }
     }
 
     /// <summary>
@@ -65,17 +64,22 @@ namespace Datum.Core.Provider
     public class DatumSkillBlueprint
     {
         public int SkillId { get; set; }
-        public List<DatumHitPoint> HitPoints { get; set; }
+        public int ContinuousFrames { get; set; }
+        public int CastPriority { get; set; }
+        public List<DatumHitPoint> HitPoints { get; set; } = new();
     }
 
     /// <summary>
-    /// 单个打击点（帧数 + 伤害倍率）。
+    /// 单个打击点（万分比伤害 + 控制效果）。
     /// </summary>
     [Serializable]
     public class DatumHitPoint
     {
-        public int Frame { get; set; }
-        public float DamageRatio { get; set; }
-        public float StaggerValue { get; set; }
+        public int DamagePerMyriad { get; set; }   // 万分比伤害系数
+        public bool CanAirborne { get; set; }
+        public bool CanKnockDown { get; set; }
+        public bool CanStiffness { get; set; }
+        public int PoiseDamage { get; set; }
+        public bool IsContinuous { get; set; }
     }
 }

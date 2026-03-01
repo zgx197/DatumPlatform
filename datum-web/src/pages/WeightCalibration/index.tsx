@@ -45,7 +45,7 @@ export default function WeightCalibration() {
     onSuccess: (data) => setPreviewScores(data),
   })
 
-  const totalWeight = local ? parseFloat((local.weightEHP + local.weightDPS + local.weightControl).toFixed(3)) : 0
+  const totalWeight = local ? parseFloat((local.survival_weight + local.damage_weight + local.control_weight).toFixed(3)) : 0
   const isWeightValid = Math.abs(totalWeight - 1.0) < 0.01
 
   const scatterOption = useMemo(() => {
@@ -92,16 +92,16 @@ export default function WeightCalibration() {
 
       <Row gutter={16}>
         <Col span={8}>
-          <WeightSlider label="EHP 权重（生存能力）" value={local.weightEHP}
-            onChange={v => setLocal({ ...local, weightEHP: v })} />
+          <WeightSlider label="EHP 权重（生存能力）" value={local.survival_weight}
+            onChange={v => setLocal({ ...local, survival_weight: v })} />
         </Col>
         <Col span={8}>
-          <WeightSlider label="DPS 权重（输出能力）" value={local.weightDPS}
-            onChange={v => setLocal({ ...local, weightDPS: v })} />
+          <WeightSlider label="DPS 权重（输出能力）" value={local.damage_weight}
+            onChange={v => setLocal({ ...local, damage_weight: v })} />
         </Col>
         <Col span={8}>
-          <WeightSlider label="控制权重（控场能力）" value={local.weightControl}
-            onChange={v => setLocal({ ...local, weightControl: v })} />
+          <WeightSlider label="控制权重（控场能力）" value={local.control_weight}
+            onChange={v => setLocal({ ...local, control_weight: v })} />
         </Col>
       </Row>
 
@@ -162,7 +162,7 @@ export default function WeightCalibration() {
 
 function CalibrationPanel({ onApply }: { onApply: (w: Partial<WeightConfig>) => void }) {
   const [calibResult, setCalibResult] = useState<{
-    weightEHP: number; weightDPS: number; weightControl: number
+    survival_weight: number; damage_weight: number; control_weight: number
     scaleFactor: number; rSquared: number; mse: number; interpretation: string
   } | null>(null)
 
@@ -179,9 +179,9 @@ function CalibrationPanel({ onApply }: { onApply: (w: Partial<WeightConfig>) => 
 
   const scatterOpt = useMemo(() => {
     if (!calibResult || samples.length === 0) return null
-    const { weightEHP, weightDPS, weightControl, scaleFactor } = calibResult
+    const { survival_weight, damage_weight, control_weight, scaleFactor } = calibResult
     const pts = samples.map(s => {
-      const pred = scaleFactor * (weightEHP * s.ehpNorm + weightDPS * s.dpsNorm + weightControl * s.controlNorm) * 10
+      const pred = scaleFactor * (survival_weight * s.ehpNorm + damage_weight * s.dpsNorm + control_weight * s.controlNorm) * 10
       return [pred, s.subjectiveScore, s.name]
     })
     const maxVal = Math.max(...pts.flatMap(p => [p[0] as number, p[1] as number])) * 1.1
@@ -227,17 +227,17 @@ function CalibrationPanel({ onApply }: { onApply: (w: Partial<WeightConfig>) => 
           <Row gutter={16} style={{ marginBottom: 12 }}>
             <Col span={6}>
               <Card size="small" title="推荐 EHP 权重">
-                <div style={{ fontSize: 20, fontWeight: 700, color: '#4e9af1' }}>{(calibResult.weightEHP * 100).toFixed(0)}%</div>
+                <div style={{ fontSize: 20, fontWeight: 700, color: '#4e9af1' }}>{(calibResult.survival_weight * 100).toFixed(0)}%</div>
               </Card>
             </Col>
             <Col span={6}>
               <Card size="small" title="推荐 DPS 权重">
-                <div style={{ fontSize: 20, fontWeight: 700, color: '#f1924e' }}>{(calibResult.weightDPS * 100).toFixed(0)}%</div>
+                <div style={{ fontSize: 20, fontWeight: 700, color: '#f1924e' }}>{(calibResult.damage_weight * 100).toFixed(0)}%</div>
               </Card>
             </Col>
             <Col span={6}>
               <Card size="small" title="推荐控制权重">
-                <div style={{ fontSize: 20, fontWeight: 700, color: '#7ec94e' }}>{(calibResult.weightControl * 100).toFixed(0)}%</div>
+                <div style={{ fontSize: 20, fontWeight: 700, color: '#7ec94e' }}>{(calibResult.control_weight * 100).toFixed(0)}%</div>
               </Card>
             </Col>
             <Col span={6}>
@@ -264,9 +264,9 @@ function CalibrationPanel({ onApply }: { onApply: (w: Partial<WeightConfig>) => 
           <Button
             type="primary"
             onClick={() => onApply({
-              weightEHP: calibResult.weightEHP,
-              weightDPS: calibResult.weightDPS,
-              weightControl: calibResult.weightControl,
+              survival_weight: calibResult.survival_weight,
+              damage_weight: calibResult.damage_weight,
+              control_weight: calibResult.control_weight,
             })}
             style={{ marginTop: 12 }}
           >
