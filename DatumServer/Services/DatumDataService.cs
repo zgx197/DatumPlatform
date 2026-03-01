@@ -8,6 +8,12 @@ namespace Datum.Server.Services
 {
     public class DatumDataService
     {
+        private static readonly System.Text.Json.JsonSerializerOptions _jsonOpts = new()
+        {
+            PropertyNameCaseInsensitive = true,
+            IncludeFields = true,
+        };
+
         private JsonFoeDataProvider? _provider;
         private EvaluationWeightConfig _weightConfig = new();
         private List<EntityScore> _cachedScores = new();
@@ -48,8 +54,7 @@ namespace Datum.Server.Services
                 try
                 {
                     var json = File.ReadAllText(weightPath);
-                    _weightConfig = System.Text.Json.JsonSerializer.Deserialize<EvaluationWeightConfig>(json,
-                        new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true })
+                    _weightConfig = System.Text.Json.JsonSerializer.Deserialize<EvaluationWeightConfig>(json, _jsonOpts)
                         ?? new EvaluationWeightConfig();
                 }
                 catch { /* 解析失败则使用默认权重 */ }
@@ -62,8 +67,7 @@ namespace Datum.Server.Services
                 try
                 {
                     var json = File.ReadAllText(calibPath);
-                    _calibrationSamples = System.Text.Json.JsonSerializer.Deserialize<List<CalibrationSample>>(json,
-                        new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true })
+                    _calibrationSamples = System.Text.Json.JsonSerializer.Deserialize<List<CalibrationSample>>(json, _jsonOpts)
                         ?? new List<CalibrationSample>();
                 }
                 catch { }
@@ -77,10 +81,14 @@ namespace Datum.Server.Services
         {
             if (_provider == null) return;
             _cachedScores = ScoreCalculator.CalculateAll(_provider, _weightConfig);
-            _registry = new MonsterTemplateRegistry
-            {
-                Templates = TemplateDiscovery.Discover(_provider)
-            };
+
+            var templates = TemplateDiscovery.Discover(_provider);
+            var scoreMap = _cachedScores.ToDictionary(s => s.ConfigId, s => s.OverallScore);
+            foreach (var tmpl in templates)
+                foreach (var v in tmpl.Variants)
+                    if (scoreMap.TryGetValue(v.ConfigId, out var s)) v.Score = s;
+
+            _registry = new MonsterTemplateRegistry { Templates = templates };
         }
 
         public IReadOnlyList<EntityScore> GetScores() => _cachedScores;

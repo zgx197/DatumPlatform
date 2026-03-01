@@ -14,7 +14,7 @@
     "HPAdd": 0, "HPAddRatio": 0,
     "FireRes": 0, "IceRes": 0, "ThunderRes": 0,
     "WindRes": 0, "QuantumRes": 0, "ImaginaryRes": 0, "PhysicsRes": 0,
-    "AttackSkillIds": [2001, 2002],
+    "AttackSkillIds": [2001, 2002, 2003],
     "NorAttackSkillId": 2001,
     "Extensions": {}
   },
@@ -52,7 +52,7 @@
     "HPAdd": 0, "HPAddRatio": 0,
     "FireRes": 1000, "IceRes": 500, "ThunderRes": 0,
     "WindRes": 0, "QuantumRes": 0, "ImaginaryRes": 0, "PhysicsRes": 0,
-    "AttackSkillIds": [2001, 2002, 2003, 2004],
+    "AttackSkillIds": [2001, 2002, 2003],
     "NorAttackSkillId": 2001,
     "Extensions": {}
   },
@@ -71,7 +71,7 @@
     "HPAdd": 0, "HPAddRatio": 0,
     "FireRes": 0, "IceRes": 0, "ThunderRes": 0,
     "WindRes": 0, "QuantumRes": 0, "ImaginaryRes": 0, "PhysicsRes": 0,
-    "AttackSkillIds": [3001],
+    "AttackSkillIds": [3001, 3002],
     "NorAttackSkillId": 3001,
     "Extensions": {}
   },

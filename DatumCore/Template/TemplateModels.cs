@@ -20,11 +20,11 @@ namespace Datum.Core.Template
     /// </summary>
     public class TemplateVariant
     {
-        public int ConfigId;
-        public string Name;
-        public float[] RawValues = new float[TemplateAttrDef.Count];
-        public float[] Scales    = new float[TemplateAttrDef.Count];
-        public float Score;
+        public int ConfigId { get; set; }
+        public string Name { get; set; }
+        public float[] RawValues { get; set; } = new float[TemplateAttrDef.Count];
+        public float[] Scales    { get; set; } = new float[TemplateAttrDef.Count];
+        public float Score { get; set; }
     }
 
     /// <summary>
@@ -32,12 +32,12 @@ namespace Datum.Core.Template
     /// </summary>
     public class MonsterTemplate
     {
-        public string ClusterKey;
-        public int FoeType;
-        public List<int> SortedSkillIds = new();
-        public float[] BaseValues = new float[TemplateAttrDef.Count];
-        public List<TemplateVariant> Variants = new();
-        public bool HasConsistencyIssue;
+        public string ClusterKey { get; set; }
+        public int FoeType { get; set; }
+        public List<int> SortedSkillIds { get; set; } = new();
+        public float[] BaseValues { get; set; } = new float[TemplateAttrDef.Count];
+        public List<TemplateVariant> Variants { get; set; } = new();
+        public bool HasConsistencyIssue { get; set; }
     }
 
     /// <summary>
@@ -45,6 +45,6 @@ namespace Datum.Core.Template
     /// </summary>
     public class MonsterTemplateRegistry
     {
-        public List<MonsterTemplate> Templates = new();
+        public List<MonsterTemplate> Templates { get; set; } = new();
     }
 }

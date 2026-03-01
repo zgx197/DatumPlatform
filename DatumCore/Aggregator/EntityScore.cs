@@ -4,14 +4,14 @@ namespace Datum.Core.Aggregator
 {
     public class EntityScore
     {
-        public int ConfigId;
-        public string Name;
-        public int FoeType;
-        public int BarriesId;
-        public float OverallScore;
-        public float EHPScore;
-        public float DPSScore;
-        public float ControlScore;
-        public Dictionary<string, float> NormalizedValues = new();
+        public int ConfigId { get; set; }
+        public string Name { get; set; }
+        public int FoeType { get; set; }
+        public int BarriesId { get; set; }
+        public float OverallScore { get; set; }
+        public float EHPScore { get; set; }
+        public float DPSScore { get; set; }
+        public float ControlScore { get; set; }
+        public Dictionary<string, float> NormalizedValues { get; set; } = new();
     }
 }
