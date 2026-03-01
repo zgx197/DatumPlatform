@@ -14,6 +14,15 @@ namespace Datum.Server.Controllers
         [HttpGet("samples")]
         public IActionResult GetSamples() => Ok(_data.GetCalibrationSamples());
 
+        [HttpPut("samples")]
+        public IActionResult SaveSamples([FromBody] List<CalibrationSample> samples)
+        {
+            if (samples == null) return BadRequest();
+            var ok = _data.SaveCalibrationSamples(samples);
+            return ok ? Ok(new { message = "已保存", count = samples.Count })
+                      : StatusCode(500, new { message = "保存失败" });
+        }
+
         [HttpPost("run")]
         public IActionResult Run([FromBody] List<CalibrationSample>? samples)
         {

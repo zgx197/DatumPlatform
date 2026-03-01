@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Card, Slider, Button, Typography, Space, Row, Col, Statistic, message, Table, Tag, Alert, Divider, Progress } from 'antd'
-import { ThunderboltOutlined } from '@ant-design/icons'
+import { Card, Slider, Button, Typography, Space, Row, Col, Statistic, message, Table, Tag, Alert, Divider, Progress, InputNumber, Popconfirm } from 'antd'
+import { ThunderboltOutlined, SaveOutlined, DeleteOutlined } from '@ant-design/icons'
 import { useState, useEffect, useMemo } from 'react'
 import ReactECharts from 'echarts-for-react'
 import { datumApi } from '../../api/datum'
@@ -154,6 +154,9 @@ export default function WeightCalibration() {
         </>
       )}
 
+      <Divider style={{ margin: '4px 0' }}>校准样本管理</Divider>
+      <SamplesPanel />
+
       <Divider style={{ margin: '4px 0' }}>最小二乘权重校准</Divider>
       <CalibrationPanel onApply={(w) => { setLocal({ ...local!, ...w }); setPreviewScores(null) }} />
     </Space>
@@ -273,6 +276,136 @@ function CalibrationPanel({ onApply }: { onApply: (w: Partial<WeightConfig>) => 
             应用推荐权重到滑块
           </Button>
         </>
+      )}
+    </Card>
+  )
+}
+
+function SamplesPanel() {
+  const queryClient = useQueryClient()
+  const { data: rawSamples = [] } = useQuery<CalibrationSample[]>({
+    queryKey: ['calibration-samples'],
+    queryFn: () => datumApi.calibrationSamples(),
+  })
+
+  const [localSamples, setLocalSamples] = useState<CalibrationSample[]>([])
+  const [dirty, setDirty] = useState(false)
+
+  useEffect(() => {
+    setLocalSamples(rawSamples.map(s => ({ ...s })))
+    setDirty(false)
+  }, [rawSamples])
+
+  const saveMutation = useMutation({
+    mutationFn: () => datumApi.saveCalibrationSamples(localSamples),
+    onSuccess: () => {
+      message.success('校准样本已保存')
+      setDirty(false)
+      queryClient.invalidateQueries({ queryKey: ['calibration-samples'] })
+    },
+    onError: () => message.error('保存失败'),
+  })
+
+  const updateScore = (configId: number, score: number) => {
+    setLocalSamples(prev => prev.map(s => s.configId === configId ? { ...s, subjectiveScore: score } : s))
+    setDirty(true)
+  }
+
+  const removeSample = (configId: number) => {
+    setLocalSamples(prev => prev.filter(s => s.configId !== configId))
+    setDirty(true)
+  }
+
+  const ANCHOR_COLORS = ['#52c41a', '#faad14', '#ff4d4f']
+  const anchorMarks = { 2: { style: { color: ANCHOR_COLORS[0] }, label: '简单' }, 5: { style: { color: ANCHOR_COLORS[1] }, label: '中等' }, 8: { style: { color: ANCHOR_COLORS[2] }, label: '困难' } }
+
+  const columns = [
+    {
+      title: '名称', dataIndex: 'name', width: 120, ellipsis: true,
+      render: (v: string, row: CalibrationSample) => (
+        <Space size={4}>
+          <Tag color={
+            row.subjectiveScore <= 3 ? 'success' : row.subjectiveScore <= 6 ? 'warning' : 'error'
+          } style={{ fontSize: 10, padding: '0 4px' }}>
+            {row.subjectiveScore <= 3 ? '简单' : row.subjectiveScore <= 6 ? '中等' : '困难'}
+          </Tag>
+          <span style={{ fontSize: 12 }}>{v}</span>
+        </Space>
+      ),
+    },
+    {
+      title: '主观评分（1-10）', key: 'score', width: 280,
+      render: (_: any, row: CalibrationSample) => (
+        <Row align="middle" gutter={8} wrap={false}>
+          <Col flex="1">
+            <Slider
+              min={1} max={10} step={0.5}
+              value={row.subjectiveScore}
+              onChange={v => updateScore(row.configId, v)}
+              marks={anchorMarks}
+              tooltip={{ formatter: (v) => v?.toFixed(1) }}
+              style={{ margin: '0 8px' }}
+            />
+          </Col>
+          <Col>
+            <InputNumber
+              min={1} max={10} step={0.5} size="small"
+              value={row.subjectiveScore}
+              onChange={v => v != null && updateScore(row.configId, v)}
+              style={{ width: 56 }}
+            />
+          </Col>
+        </Row>
+      ),
+    },
+    {
+      title: 'EHP_norm', dataIndex: 'ehpNorm', width: 90,
+      render: (v: number) => <span style={{ color: '#4e9af1', fontSize: 12 }}>{v.toFixed(3)}</span>,
+    },
+    {
+      title: 'DPS_norm', dataIndex: 'dpsNorm', width: 90,
+      render: (v: number) => <span style={{ color: '#f1924e', fontSize: 12 }}>{v.toFixed(3)}</span>,
+    },
+    {
+      title: '操作', key: 'action', width: 60,
+      render: (_: any, row: CalibrationSample) => (
+        <Popconfirm title="确认删除此样本？" onConfirm={() => removeSample(row.configId)} okText="删除" cancelText="取消">
+          <Button type="text" size="small" danger icon={<DeleteOutlined />} />
+        </Popconfirm>
+      ),
+    },
+  ]
+
+  return (
+    <Card
+      size="small"
+      title={`校准样本（${localSamples.length} 条，建议 8-15 个）`}
+      extra={
+        <Space>
+          {dirty && <Text type="warning" style={{ fontSize: 12 }}>有未保存的修改</Text>}
+          <Button
+            type="primary" size="small"
+            icon={<SaveOutlined />}
+            loading={saveMutation.isPending}
+            disabled={!dirty}
+            onClick={() => saveMutation.mutate()}
+          >
+            保存
+          </Button>
+        </Space>
+      }
+    >
+      {localSamples.length === 0 ? (
+        <Alert type="info" showIcon message="暂无校准样本" description="在「全量评估」页面点击怪物详情中的「添加到校准样本」按钮来添加" />
+      ) : (
+        <Table
+          rowKey="configId"
+          dataSource={localSamples}
+          columns={columns}
+          size="small"
+          pagination={false}
+          scroll={{ y: 320 }}
+        />
       )}
     </Card>
   )

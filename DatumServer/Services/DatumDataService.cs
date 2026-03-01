@@ -108,5 +108,24 @@ namespace Datum.Server.Services
             _weightConfig = weights;
             RecalculateScores();
         }
+
+        public bool SaveCalibrationSamples(List<CalibrationSample> samples)
+        {
+            if (string.IsNullOrEmpty(_dataDir)) return false;
+            try
+            {
+                _calibrationSamples = samples;
+                var path = Path.Combine(_dataDir, "calibration.json");
+                var writeOpts = new System.Text.Json.JsonSerializerOptions
+                {
+                    WriteIndented = true,
+                    IncludeFields = true,
+                };
+                File.WriteAllText(path, System.Text.Json.JsonSerializer.Serialize(samples, writeOpts),
+                    System.Text.Encoding.UTF8);
+                return true;
+            }
+            catch { return false; }
+        }
     }
 }
