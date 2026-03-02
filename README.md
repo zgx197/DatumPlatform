@@ -19,10 +19,11 @@ DatumPlatform/
 │   └── DatumCore/             计算核心（与 Unity 共享，无 Unity 依赖）
 │       ├── Aggregator/         综合评分层（加权聚合、Power Mean）
 │       ├── Calibrator/         权重校准器（最小二乘法求解）
-│       ├── Metrics/            战斗指标（EHP/DPS/控制）
+│       ├── Metrics/            战斗指标（EHP/DPS/控制 + 分解字段）
 │       ├── Provider/           数据提供者（JsonFoeDataProvider）
-│       ├── Resolver/           属性折算
+│       ├── Resolver/           属性折算（含元素抗性）
 │       ├── SkillEvaluator/     技能评估
+│       ├── BuffEvaluator/      Buff 评估（DOT DPS + 控制时长 + 被动EHP修正）
 │       ├── Snapshot/           数据快照
 │       └── Template/           模板发现与评估
 └── datum_export/               Unity 导出的 JSON 数据（由 Unity 项目生成）
@@ -32,7 +33,13 @@ DatumPlatform/
 
 ### 全量评估（ScoreDashboard）
 - **难度条**：EHP（蓝）+ DPS（橙）双色可视化
-- **右侧详情抽屉**：综合评分、类型系数、EHP/DPS/控制三段进度条、贡献分解
+- **右侧详情抽屉**：
+  - 综合评分、类型系数
+  - **特性标签**：元素抗性、被动Buff、DOT伤害、Buff控制（按特征动态显示）
+  - **DPS 分解**：堆叠条（橙=技能DPS，红=DOT DPS）+ 百分比
+  - **EHP 修正**：元素抗性因子 + 被动Buff因子
+  - **控制分解**：堆叠条（浅绿=技能控制，深绿=Buff控制）
+  - 归一化贡献（生存/输出/控制）
 - **异常检测**：DPS=0、生存/输出悬殊、控制满值时黄色警告
 - **关卡筛选**：下拉按关卡过滤
 - **添加到校准**：一键将怪物加入校准样本
@@ -109,9 +116,10 @@ datum-web（React 前端）
 - 新增图表：使用 `echarts-for-react`，参考现有页面的 `option` 写法。
 
 ### 数据格式
-- **monsters.json**：怪物基础数据（`DatumFoeRow`）
-- **skill_info.json**：技能基础配置（`DatumSkillInfoRow`）
-- **skill_blueprints.json**：技能蓝图（`DatumSkillBlueprint` + `DatumHitPoint`）
+- **monsters.json**：怪物基础数据（`DatumFoeRow`，含 `PassiveSkillIds`）
+- **skill_info.json**：技能基础配置（`DatumSkillInfoRow`，含 `SelfEffectBuffIds`）
+- **skill_blueprints.json**：技能蓝图（`DatumSkillBlueprint` + `DatumHitPoint`，含 `DamageElement` + `AttachedBuffIds`）
+- **buff_configs.json**：Buff 配置（`DatumBuffConfigRow`，DOT/控制/效果组）
 - **weight_config.json**：权重配置（`WeightConfig`）
 - **calibration.json**：校准样本（`CalibrationSample`）
 - **templates.json**：模板注册表（`MonsterTemplate`）

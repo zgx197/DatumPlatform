@@ -8,6 +8,18 @@ export interface EntityScore {
   dpsScore: number
   controlScore: number
   normalizedValues: { EHP_norm: number; DPS_norm: number; Control_norm: number }
+
+  // DPS 分解（原始值）
+  skillDPS: number
+  dotDPS: number
+
+  // Control 分解（原始值）
+  skillControlScore: number
+  buffControlScore: number
+
+  // EHP 修正因子
+  elementResistanceFactor: number
+  passiveBuffModifier: number
 }
 
 export interface WeightConfig {

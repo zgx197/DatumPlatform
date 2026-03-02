@@ -231,92 +231,157 @@ export default function ScoreDashboard() {
         title={selected ? `${selected.name}（ID: ${selected.configId}）` : ''}
         open={!!selected}
         onClose={() => setSelected(null)}
-        width={400}
+        width={420}
         styles={{ body: { padding: 16 } }}
       >
-        {selected && (
-          <Space direction="vertical" style={{ width: '100%' }} size={12}>
-            <Descriptions size="small" column={1} bordered>
-              <Descriptions.Item label="ConfigId">{selected.configId}</Descriptions.Item>
-              <Descriptions.Item label="类型">
-                <Tag color={FOE_TYPE_COLORS[selected.foeType] ?? 'default'}>{FOE_TYPE_LABELS[selected.foeType] ?? selected.foeType}</Tag>
-              </Descriptions.Item>
-              <Descriptions.Item label="关卡">关卡 {selected.barriesId}</Descriptions.Item>
-            </Descriptions>
+        {selected && (() => {
+          const hasElementRes = selected.elementResistanceFactor > 1.001
+          const hasPassiveBuff = selected.passiveBuffModifier > 1.001
+          const hasDot = selected.dotDPS > 0.001
+          const hasBuffControl = selected.buffControlScore > 0.001
+          const totalDPS = selected.skillDPS + selected.dotDPS
+          const skillDPSPct = totalDPS > 0 ? (selected.skillDPS / totalDPS) * 100 : 100
+          const dotDPSPct = totalDPS > 0 ? (selected.dotDPS / totalDPS) * 100 : 0
+          const totalCtrl = selected.skillControlScore + selected.buffControlScore
+          const skillCtrlPct = totalCtrl > 0 ? (selected.skillControlScore / totalCtrl) * 100 : 100
+          const buffCtrlPct = totalCtrl > 0 ? (selected.buffControlScore / totalCtrl) * 100 : 0
 
-            <Card size="small" title="综合评分">
-              <Row gutter={12}>
-                <Col span={12}>
-                  <Statistic title="综合评分" value={selected.overallScore.toFixed(3)} valueStyle={{ color: '#4e9af1', fontSize: 20 }} />
-                </Col>
-                <Col span={12}>
-                  <Statistic title="类型系数" value={
-                    selected.foeType === 4 ? '×2.5 (Boss)' : selected.foeType === 5 ? '×1.5 (精英)' : '×1.0'
-                  } valueStyle={{ fontSize: 14 }} />
-                </Col>
-              </Row>
-            </Card>
+          return (
+            <Space direction="vertical" style={{ width: '100%' }} size={12}>
+              <Descriptions size="small" column={1} bordered>
+                <Descriptions.Item label="ConfigId">{selected.configId}</Descriptions.Item>
+                <Descriptions.Item label="类型">
+                  <Tag color={FOE_TYPE_COLORS[selected.foeType] ?? 'default'}>{FOE_TYPE_LABELS[selected.foeType] ?? selected.foeType}</Tag>
+                </Descriptions.Item>
+                <Descriptions.Item label="关卡">关卡 {selected.barriesId}</Descriptions.Item>
+              </Descriptions>
 
-            <Card size="small" title="战斗指标">
-              <Space direction="vertical" style={{ width: '100%' }} size={8}>
-                <div>
-                  <Text type="secondary" style={{ fontSize: 12 }}>EHP（生存）</Text>
-                  <Progress
-                    percent={Math.min((selected.ehpScore / maxEHP) * 100, 100)}
-                    strokeColor="#4e9af1" size="small"
-                    format={() => selected.ehpScore.toFixed(1)}
-                  />
+              {/* 特性标签 */}
+              {(hasElementRes || hasPassiveBuff || hasDot || hasBuffControl) && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                  {hasElementRes && <Tag color="cyan">元素抗性 ×{selected.elementResistanceFactor.toFixed(2)}</Tag>}
+                  {hasPassiveBuff && <Tag color="purple">被动Buff ×{selected.passiveBuffModifier.toFixed(2)}</Tag>}
+                  {hasDot && <Tag color="volcano">DOT伤害</Tag>}
+                  {hasBuffControl && <Tag color="green">Buff控制</Tag>}
                 </div>
-                <div>
-                  <Text type="secondary" style={{ fontSize: 12 }}>DPS（输出）</Text>
-                  <Progress
-                    percent={Math.min((selected.dpsScore / maxDPS) * 100, 100)}
-                    strokeColor="#f1924e" size="small"
-                    format={() => selected.dpsScore.toFixed(2)}
-                  />
-                </div>
-                <div>
-                  <Text type="secondary" style={{ fontSize: 12 }}>控制评分</Text>
-                  <Progress
-                    percent={Math.min(selected.controlScore * 100, 100)}
-                    strokeColor="#7ec94e" size="small"
-                    format={() => (selected.controlScore * 100).toFixed(1) + '%'}
-                  />
-                </div>
-              </Space>
-            </Card>
+              )}
 
-            <Card size="small" title="贡献分解">
-              <Row gutter={8}>
-                <Col span={8}><Statistic title="生存贡献" value={(selected.normalizedValues?.EHP_norm ?? selected.ehpScore).toFixed(3)} valueStyle={{ fontSize: 14, color: '#4e9af1' }} /></Col>
-                <Col span={8}><Statistic title="输出贡献" value={(selected.normalizedValues?.DPS_norm ?? selected.dpsScore).toFixed(3)} valueStyle={{ fontSize: 14, color: '#f1924e' }} /></Col>
-                <Col span={8}><Statistic title="控制贡献" value={(selected.normalizedValues?.Control_norm ?? selected.controlScore).toFixed(4)} valueStyle={{ fontSize: 14, color: '#7ec94e' }} /></Col>
-              </Row>
-            </Card>
+              <Card size="small" title="综合评分">
+                <Row gutter={12}>
+                  <Col span={12}>
+                    <Statistic title="综合评分" value={selected.overallScore.toFixed(3)} valueStyle={{ color: '#4e9af1', fontSize: 20 }} />
+                  </Col>
+                  <Col span={12}>
+                    <Statistic title="类型系数" value={
+                      selected.foeType === 4 ? '×2.5 (Boss)' : selected.foeType === 5 ? '×1.5 (精英)' : '×1.0'
+                    } valueStyle={{ fontSize: 14 }} />
+                  </Col>
+                </Row>
+              </Card>
 
-            {selectedAnomalies.length > 0 && (
-              <Alert type="warning" showIcon
-                message="异常检测"
-                description={
-                  <ul style={{ margin: 0, paddingLeft: 16 }}>
-                    {selectedAnomalies.map((issue, i) => <li key={i} style={{ fontSize: 12 }}>{issue}</li>)}
-                  </ul>
-                }
-              />
-            )}
+              {/* DPS 分解 */}
+              <Card size="small" title="DPS 分解">
+                <Space direction="vertical" style={{ width: '100%' }} size={6}>
+                  <div>
+                    <Text type="secondary" style={{ fontSize: 12 }}>DPS 总量（归一化: {selected.dpsScore.toFixed(3)}）</Text>
+                    <div style={{ display: 'flex', height: 16, background: '#21262d', borderRadius: 4, overflow: 'hidden', marginTop: 4 }}>
+                      <Tooltip title={`技能DPS: ${selected.skillDPS.toFixed(1)}（${skillDPSPct.toFixed(0)}%）`}>
+                        <div style={{ width: `${skillDPSPct}%`, background: '#f1924e', transition: 'width 0.3s', minWidth: skillDPSPct > 0 ? 2 : 0 }} />
+                      </Tooltip>
+                      <Tooltip title={`DOT DPS: ${selected.dotDPS.toFixed(1)}（${dotDPSPct.toFixed(0)}%）`}>
+                        <div style={{ width: `${dotDPSPct}%`, background: '#ff4d4f', transition: 'width 0.3s', minWidth: dotDPSPct > 0 ? 2 : 0 }} />
+                      </Tooltip>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 2, fontSize: 11, color: '#8b949e' }}>
+                      <span><span style={{ color: '#f1924e' }}>■</span> 技能 {selected.skillDPS.toFixed(1)}</span>
+                      {hasDot && <span><span style={{ color: '#ff4d4f' }}>■</span> DOT {selected.dotDPS.toFixed(1)}</span>}
+                    </div>
+                  </div>
+                </Space>
+              </Card>
 
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              block
-              disabled={alreadyInCalib}
-              loading={addToCalibMutation.isPending}
-              onClick={() => addToCalibMutation.mutate(selected)}
-            >
-              {alreadyInCalib ? '已在校准样本中' : '添加到校准样本'}
-            </Button>
-          </Space>
-        )}
+              {/* EHP 修正 */}
+              <Card size="small" title="EHP 修正">
+                <Space direction="vertical" style={{ width: '100%' }} size={6}>
+                  <div>
+                    <Text type="secondary" style={{ fontSize: 12 }}>EHP（归一化: {selected.ehpScore.toFixed(3)}）</Text>
+                    <Progress
+                      percent={Math.min((selected.ehpScore / maxEHP) * 100, 100)}
+                      strokeColor="#4e9af1" size="small"
+                      format={() => selected.ehpScore.toFixed(3)}
+                    />
+                  </div>
+                  <Row gutter={8}>
+                    <Col span={12}>
+                      <Tooltip title="基于冰/火/毒/全元素抗性的平均值计算">
+                        <Statistic title="元素抗性因子" value={`×${selected.elementResistanceFactor.toFixed(3)}`}
+                          valueStyle={{ fontSize: 14, color: hasElementRes ? '#61dafb' : '#8b949e' }} />
+                      </Tooltip>
+                    </Col>
+                    <Col span={12}>
+                      <Tooltip title="被动技能Buff对EHP的永久增益修正">
+                        <Statistic title="被动Buff因子" value={`×${selected.passiveBuffModifier.toFixed(3)}`}
+                          valueStyle={{ fontSize: 14, color: hasPassiveBuff ? '#a855f7' : '#8b949e' }} />
+                      </Tooltip>
+                    </Col>
+                  </Row>
+                </Space>
+              </Card>
+
+              {/* 控制分解 */}
+              <Card size="small" title="控制分解">
+                <Space direction="vertical" style={{ width: '100%' }} size={6}>
+                  <div>
+                    <Text type="secondary" style={{ fontSize: 12 }}>控制总量（归一化: {selected.controlScore.toFixed(4)}）</Text>
+                    <div style={{ display: 'flex', height: 16, background: '#21262d', borderRadius: 4, overflow: 'hidden', marginTop: 4 }}>
+                      <Tooltip title={`技能控制: ${selected.skillControlScore.toFixed(3)}（${skillCtrlPct.toFixed(0)}%）`}>
+                        <div style={{ width: `${skillCtrlPct}%`, background: '#7ec94e', transition: 'width 0.3s', minWidth: skillCtrlPct > 0 ? 2 : 0 }} />
+                      </Tooltip>
+                      <Tooltip title={`Buff控制: ${selected.buffControlScore.toFixed(3)}s（${buffCtrlPct.toFixed(0)}%）`}>
+                        <div style={{ width: `${buffCtrlPct}%`, background: '#52c41a', transition: 'width 0.3s', minWidth: buffCtrlPct > 0 ? 2 : 0 }} />
+                      </Tooltip>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 2, fontSize: 11, color: '#8b949e' }}>
+                      <span><span style={{ color: '#7ec94e' }}>■</span> 技能 {selected.skillControlScore.toFixed(3)}</span>
+                      {hasBuffControl && <span><span style={{ color: '#52c41a' }}>■</span> Buff {selected.buffControlScore.toFixed(3)}s</span>}
+                    </div>
+                  </div>
+                </Space>
+              </Card>
+
+              {/* 贡献分解 */}
+              <Card size="small" title="归一化贡献">
+                <Row gutter={8}>
+                  <Col span={8}><Statistic title="生存" value={(selected.normalizedValues?.EHP_norm ?? selected.ehpScore).toFixed(3)} valueStyle={{ fontSize: 14, color: '#4e9af1' }} /></Col>
+                  <Col span={8}><Statistic title="输出" value={(selected.normalizedValues?.DPS_norm ?? selected.dpsScore).toFixed(3)} valueStyle={{ fontSize: 14, color: '#f1924e' }} /></Col>
+                  <Col span={8}><Statistic title="控制" value={(selected.normalizedValues?.Control_norm ?? selected.controlScore).toFixed(4)} valueStyle={{ fontSize: 14, color: '#7ec94e' }} /></Col>
+                </Row>
+              </Card>
+
+              {selectedAnomalies.length > 0 && (
+                <Alert type="warning" showIcon
+                  message="异常检测"
+                  description={
+                    <ul style={{ margin: 0, paddingLeft: 16 }}>
+                      {selectedAnomalies.map((issue, i) => <li key={i} style={{ fontSize: 12 }}>{issue}</li>)}
+                    </ul>
+                  }
+                />
+              )}
+
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                block
+                disabled={alreadyInCalib}
+                loading={addToCalibMutation.isPending}
+                onClick={() => addToCalibMutation.mutate(selected)}
+              >
+                {alreadyInCalib ? '已在校准样本中' : '添加到校准样本'}
+              </Button>
+            </Space>
+          )
+        })()}
       </Drawer>
     </Space>
   )

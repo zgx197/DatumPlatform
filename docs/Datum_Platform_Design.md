@@ -1,9 +1,9 @@
 # Datum Platform — 跨项目数值分析平台设计文档
 
-> **文档版本**：v2.0  
+> **文档版本**：v3.0  
 > **创建时间**：2026-03-02  
 > **最后更新**：2026-03-02  
-> **状态**：**Phase 3 全部完成** — 后端 API + 4 个前端页面已全面实现；Unity 侧已清理为仅保留 Export  
+> **状态**：**Phase 3 + 元素/Buff 维度集成完成** — 后端 API + 4 个前端页面 + BuffEvaluator + DPS/控制分解可视化  
 > **文档位置**：`D:\work\DatumPlatform\docs\`  
 > **前置文档**：`Datum_Design.md`（Unity 侧 `Documentations~/`，核心评估框架历史设计）
 
@@ -60,6 +60,7 @@ Datum 最初以 Unity Editor 插件形式运行（v1.0~v4.0），现已完成平
 │  │  ├── Resolver/    属性折算                                   │ │
 │  │  ├── Metrics/     战斗指标计算（EHP/DPS/控制）                │ │
 │  │  ├── SkillEval/   技能 DPS + 控制评估                        │ │
+│  │  ├── BuffEvaluator/ DOT DPS + 控制时长 + 被动EHP修正       │ │
 │  │  ├── Aggregator/  Power Mean 评分聚合                        │ │
 │  │  ├── Calibrator/  权重最小二乘校准                            │ │
 │  │  └── Template/    模板发现 + 缩放一致性检查                   │ │
@@ -81,9 +82,10 @@ Datum 最初以 Unity Editor 插件形式运行（v1.0~v4.0），现已完成平
 │  └─────────────────────────────────────────────────────────────┘ │
 │                                                                   │
 │  datum_export/  ← Unity 导出 + Git 同步                           │
-│  ├── monsters.json          怪物基础数据                          │
-│  ├── skill_info.json        技能基础配置                          │
-│  ├── skill_blueprints.json  技能蓝图（打击点数据）                │
+│  ├── monsters.json          怪物基础数据（+PassiveSkillIds）           │
+│  ├── skill_info.json        技能基础配置（+SelfEffectBuffIds）       │
+│  ├── skill_blueprints.json  技能蓝图（+DamageElement+AttachedBuffIds）│
+│  ├── buff_configs.json      Buff 配置（DOT/控制/效果组）          │
 │  ├── weight_config.json     权重配置                              │
 │  ├── calibration.json       校准样本                              │
 │  ├── templates.json         模板注册表                            │
@@ -106,6 +108,7 @@ datum-platform/
 │   ├── Resolver/
 │   ├── Metrics/
 │   ├── SkillEvaluator/
+│   ├── BuffEvaluator/          # DOT DPS + 控制时长 + 被动EHP修正
 │   ├── Aggregator/
 │   ├── Calibrator/
 │   ├── Template/
@@ -189,7 +192,8 @@ public class DatumDataService
         var monstersJson   = File.ReadAllText(Path.Combine(exportDir, "monsters.json"));
         var skillInfoJson  = File.ReadAllText(Path.Combine(exportDir, "skill_info.json"));
         var blueprintsJson = File.ReadAllText(Path.Combine(exportDir, "skill_blueprints.json"));
-        _provider = new JsonFoeDataProvider(monstersJson, skillInfoJson, blueprintsJson);
+        var buffCfgJson    = File.ReadAllText(Path.Combine(exportDir, "buff_configs.json"));
+        _provider = new JsonFoeDataProvider(monstersJson, skillInfoJson, blueprintsJson, buffCfgJson);
     }
 
     public IReadOnlyList<EntityScore> GetAllScores() { /* 调用 Core 层 */ }
@@ -233,7 +237,13 @@ watcher.Changed += async (_, _) => {
 
 **① 全量评估（ScoreDashboard）** ✅  
 - EHP/DPS **双色难度条**（蓝/橙，hover 显示数值）
-- 点击任意行弹出**右侧详情抽屉**：综合评分、类型系数、EHP/DPS/控制三段进度条、贡献分解
+- 点击任意行弹出**右侧详情抽屉**：
+  - 综合评分、类型系数
+  - **特性标签**：元素抗性（cyan）、被动Buff（purple）、DOT伤害（volcano）、Buff控制（green）
+  - **DPS 分解**：堆叠条形图（橙=技能DPS，红=DOT DPS）+ 百分比 + 原始值
+  - **EHP 修正**：元素抗性因子 + 被动Buff因子，高亮非默认值
+  - **控制分解**：堆叠条形图（浅绿=技能控制，深绿=Buff控制）
+  - 归一化贡献（生存/输出/控制）
 - **异常检测**：DPS=0、生存/输出悬殊 10x、控制满值时显示黄色 ⚠ 图标 + 详情
 - **关卡筛选**下拉
 - 详情面板内**"添加到校准样本"**按钮（直接调后端保存）
@@ -449,7 +459,8 @@ public interface IMlAdvisor
 | **Phase 3.6** | Unity 侧清理 | 删除 Windows/Calibrator/Template/DatumContext 等旧代码；仅保留 Export；更新 README 和设计文档 | ✅ 已完成 |
 | **Phase 4** | Git Hook 自动化 | `post-commit` 触发 Unity 导出；CI 集成 | 🔲 待实施 |
 | **Phase 5** | 打包与分发 | `build.ps1` 一键构建；`datum-server.exe` 单文件验证；策划端测试 | 🔲 待实施 |
-| **Phase 6** | 深度功能演进 | 元素维度 + Buff 维度 + 关卡维度 + 蒙特卡洛仿真（详见第 12 节） | 🔲 远期 |
+| **Phase 6a** | 元素/Buff 维度集成 | BuffEvaluator + 元素抗性修正 + DPS/控制分解 + 前端可视化增强 | ✅ 已完成 |
+| **Phase 6b** | 关卡维度 + 蒙特卡洛仿真 | 关卡聚合升级 + Slow Evaluator（详见第 12 节） | 🔲 远期 |
 | **Phase 7** | 跨项目适配 | 第二个项目接入验证；`--data` 参数切换 | 🔲 远期 |
 | **Phase 8** | ML 接入 | `IMlAdvisor` 实现（ML.NET 或 Python 微服务）| 🔲 远期 |
 
@@ -558,41 +569,13 @@ datum-web/src/
 > 以下是 Datum 评估框架的深度功能演进方向，当前均为规划阶段，按优先级和收益排序。
 > 这些方向将在 DatumPlatform 中实现，不再回到 Unity 侧。
 
-### 12.1 方向 A：元素维度纳入（补全 DPS 精度）
+### ~~12.1 方向 A：元素维度纳入~~ ✅ 已完成
 
-**现状**：v2 的 DPS 是纯物理伤害，完全忽略了元素攻击/元素抗性。实际战斗中元素伤害占比不小。
+已在 Phase 6a 实现：元素抗性修正 EHP（`ElementResistanceFactor = 1 + avgRes/10000`），打击点元素类型导出（`DamageElement`）。
 
-**数据基础**：`DatumFoeRow` 已包含 `Ice_res / Fire_res / Poi_res / Ele_res` 四项元素抗性（快照中已提取）。
+### ~~12.2 方向 B：Buff 维度~~ ✅ 已完成
 
-**实现思路**：
-- 从 `SkillConfigAsset` 或配置表读取技能的元素类型（火/冰/毒/雷）
-- DPS 修正公式：`element_dps = base_dps × (1 - element_resistance / 10000)`
-- 导出时在 `skill_blueprints.json` 中新增 `ElementType` 字段
-- 后端 `CombatMetricsCalculator` 增加元素抗性折算
-
-**难点**：需要确定每个技能的元素类型数据来源（配置表 vs 技能蓝图资产）。
-
-**收益**：中等。对纯物理怪物无影响，但对元素类怪物/Boss 评分更准确。
-
-**工作量**：1-2 天。
-
-### 12.2 方向 B：Buff 维度（技能附带效果）
-
-**现状**：很多怪物技能附带 Buff（增伤/减伤/DOT/控制），v2 完全忽略了这部分。
-
-**实现思路**：
-- 从 `SkillAddBuffAbilityConfig` 读取技能附带的 BuffID
-- 查 Buff 配置表，提取效果类型：
-  - DPS 类 Buff（DOT、增伤）→ 折算为额外 DPS
-  - 控制类 Buff（减速、眩晕、沉默）→ 折算为额外控制分
-  - 防御类 Buff（加防、减伤）→ 折算为额外 EHP
-- 导出时在 `skill_blueprints.json` 中新增 `AttachedBuffs` 数组
-
-**难点**：Buff 配置表结构复杂，效果类型多样，需要逐类解析和映射。
-
-**收益**：高。对 Boss 型怪物尤其重要，因为 Boss 的难度很大程度来自 Buff 而非直接伤害。
-
-**工作量**：4-5 天。
+已在 Phase 6a 实现：`BuffEvaluator` 模块（DOT DPS + 控制时长 + 被动 EHP 修正），新增 `buff_configs.json` 导出。详见 `Datum_Design.md` 第 11 节。
 
 ### 12.3 方向 C：关卡维度聚合升级
 
@@ -648,12 +631,12 @@ Slow Evaluator（蒙特卡洛仿真）
 
 ### 12.5 优先级排序
 
-| 优先级 | 方向 | 工作量 | 理由 |
+| 优先级 | 方向 | 工作量 | 状态 |
 |---|---|---|---|
-| **P1** | A：元素维度 | 1-2天 | 补全 DPS 精度，数据已就绪，工作量小 |
-| **P1** | C：关卡维度 | 3-4天 | 从"单体评估"升级为"关卡设计辅助"，对策划价值跃升 |
-| **P2** | B：Buff 维度 | 4-5天 | 重要但复杂，需要 Buff 配置表的深入分析 |
-| **P3** | D：蒙特卡洛仿真 | 1周+ | 长期目标，工作量最大，需要复刻战斗逻辑 |
+| ~~**P1**~~ | ~~A：元素维度~~ | ~~1-2天~~ | ✅ 已完成 |
+| **P1** | C：关卡维度 | 3-4天 | 🔲 待实施 |
+| ~~**P2**~~ | ~~B：Buff 维度~~ | ~~4-5天~~ | ✅ 已完成 |
+| **P3** | D：蒙特卡洛仿真 | 1周+ | 🔲 远期目标 |
 
 ### 12.6 各方向对评分管线的影响
 
@@ -685,4 +668,4 @@ Snapshot → Resolver → Metrics(EHP/DPS/Control) → SkillEval → Aggregator 
 ---
 
 *最后更新：2026-03-02*  
-*版本：v2.0 — Phase 3 全部完成（后端 + 4 个前端页面 + Unity 侧清理），未来演进方向规划中*
+*版本：v3.0 — Phase 3 + 元素/Buff 维度集成完成（BuffEvaluator + DPS/控制分解 + 前端可视化增强）*

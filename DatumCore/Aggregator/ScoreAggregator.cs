@@ -69,6 +69,14 @@ namespace Datum.Core.Aggregator
                 EHPScore     = ehpNorm,
                 DPSScore     = dpsNorm,
                 ControlScore = controlNorm,
+
+                // 分解字段
+                SkillDPS                = metrics.SkillDPS,
+                DotDPS                  = metrics.DotDPS,
+                SkillControlScore       = metrics.SkillControlScore,
+                BuffControlScore        = metrics.BuffControlScore,
+                ElementResistanceFactor = metrics.ElementResistanceFactor,
+                PassiveBuffModifier     = metrics.PassiveBuffModifier,
             };
 
             score.NormalizedValues["EHP_norm"]     = ehpNorm;
