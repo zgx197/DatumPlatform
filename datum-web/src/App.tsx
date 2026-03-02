@@ -9,6 +9,7 @@ import {
   SettingOutlined,
   BugOutlined,
   EnvironmentOutlined,
+  BookOutlined,
 } from '@ant-design/icons'
 import * as signalR from '@microsoft/signalr'
 import AppRoutes from './routes/AppRoutes'
@@ -26,6 +27,7 @@ const NAV_ITEMS = [
   { key: '/levels',       icon: <EnvironmentOutlined />, label: '关卡视图' },
   { key: '/calibration',  icon: <ExperimentOutlined />,  label: '权重调节' },
   { key: '/health',       icon: <BugOutlined />,         label: '数值健康' },
+  { key: '/docs',         icon: <BookOutlined />,         label: '系统文档' },
   { key: '/settings',     icon: <SettingOutlined />,      label: '设置' },
 ]
 

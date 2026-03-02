@@ -76,6 +76,15 @@ if (-not $FrontendOnly) {
     }
 }
 
+# Sync docs to frontend public directory
+$docsSource = Join-Path $ScriptRoot "docs\Datum_Formula_Reference.md"
+$docsDest   = Join-Path $ScriptRoot "datum-web\public\docs"
+if (Test-Path $docsSource) {
+    if (-not (Test-Path $docsDest)) { New-Item -ItemType Directory -Path $docsDest -Force | Out-Null }
+    Copy-Item $docsSource $docsDest -Force
+    Write-Host "[docs] Synced Datum_Formula_Reference.md -> datum-web/public/docs/" -ForegroundColor DarkGray
+}
+
 # Step 2: Start backend in a new window
 $backendProc = $null
 if (-not $FrontendOnly) {

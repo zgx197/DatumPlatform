@@ -5,6 +5,7 @@ import WeightCalibration from '../pages/WeightCalibration'
 import HealthReport from '../pages/HealthReport'
 import LevelView from '../pages/LevelView'
 import Settings from '../pages/Settings'
+import FormulaDoc from '../pages/FormulaDoc'
 
 export default function AppRoutes() {
   return (
@@ -15,6 +16,7 @@ export default function AppRoutes() {
       <Route path="/health" element={<HealthReport />} />
       <Route path="/levels" element={<LevelView />} />
       <Route path="/settings" element={<Settings />} />
+      <Route path="/docs" element={<FormulaDoc />} />
     </Routes>
   )
 }
