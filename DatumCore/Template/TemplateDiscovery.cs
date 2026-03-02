@@ -87,13 +87,13 @@ namespace Datum.Core.Template
                 row.Attack,
                 row.Defence,
                 row.HP,
-                row.AtkSpeed,
+                row.AttackSpeedPro,
                 row.ToughMax,
-                0f,             // Speed（DatumFoeRow 暂无 Speed 字段，预留）
+                row.Speed,
                 row.IceRes,
                 row.FireRes,
-                row.PhysicsRes,
-                row.QuantumRes,
+                row.PoisonRes,
+                row.EleRes,
             };
         }
     }

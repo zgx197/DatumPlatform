@@ -13,15 +13,19 @@ namespace Datum.Core.Provider
         private Dictionary<int, DatumFoeRow> _foeMap = new();
         private Dictionary<int, DatumSkillInfoRow> _skillInfoMap = new();
         private Dictionary<int, DatumSkillBlueprint> _blueprintMap = new();
+        private List<DatumBuffConfigRow> _buffConfigList = new();
+        private Dictionary<int, DatumBuffConfigRow> _buffConfigMap = new();
 
         public JsonFoeDataProvider(
             string monstersJson,
             string skillInfoJson,
-            string blueprintsJson)
+            string blueprintsJson,
+            string buffConfigsJson = "[]")
         {
             LoadMonsters(monstersJson);
             LoadSkillInfo(skillInfoJson);
             LoadBlueprints(blueprintsJson);
+            LoadBuffConfigs(buffConfigsJson);
         }
 
         private static readonly JsonSerializerOptions _jsonOpts = new()
@@ -54,6 +58,14 @@ namespace Datum.Core.Provider
                 _blueprintMap[bp.SkillId] = bp;
         }
 
+        private void LoadBuffConfigs(string json)
+        {
+            if (string.IsNullOrEmpty(json)) return;
+            _buffConfigList = JsonSerializer.Deserialize<List<DatumBuffConfigRow>>(json, _jsonOpts) ?? new();
+            foreach (var row in _buffConfigList)
+                _buffConfigMap[row.ConfigId] = row;
+        }
+
         public IReadOnlyList<DatumFoeRow> GetAllFoeRows() => _foeRows;
 
         public bool TryGetFoeRow(int configId, out DatumFoeRow row)
@@ -64,6 +76,11 @@ namespace Datum.Core.Provider
 
         public DatumSkillInfoRow GetSkillInfoRow(int skillId)
             => _skillInfoMap.TryGetValue(skillId, out var row) ? row : null;
+
+        public DatumBuffConfigRow GetBuffConfig(int buffConfigId)
+            => _buffConfigMap.TryGetValue(buffConfigId, out var row) ? row : null;
+
+        public IReadOnlyList<DatumBuffConfigRow> GetAllBuffConfigs() => _buffConfigList;
 
         public void ClearCache()
         {

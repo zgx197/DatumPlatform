@@ -45,7 +45,8 @@ namespace Datum.Server.Services
             _provider = new JsonFoeDataProvider(
                 Read("monsters.json"),
                 Read("skill_info.json"),
-                Read("skill_blueprints.json"));
+                Read("skill_blueprints.json"),
+                Read("buff_configs.json"));
 
             // 加载权重配置
             var weightPath = Path.Combine(dir, "weight_config.json");

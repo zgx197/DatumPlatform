@@ -1,11 +1,11 @@
 # Datum Platform — 跨项目数值分析平台设计文档
 
-> **文档版本**：v1.2  
+> **文档版本**：v2.0  
 > **创建时间**：2026-03-02  
 > **最后更新**：2026-03-02  
-> **状态**：开发阶段（Phase 3.1 + 3.2 + 3.3 已完成，前端运行中）  
-> **文档位置**：`D:\work\DatumPlatform\docs\`（已从 UnityProject 迁移）  
-> **前置文档**：`Datum_Design.md`（Unity Editor 工具设计，Phase1+Phase2 已完成）
+> **状态**：**Phase 3 全部完成** — 后端 API + 4 个前端页面已全面实现；Unity 侧已清理为仅保留 Export  
+> **文档位置**：`D:\work\DatumPlatform\docs\`  
+> **前置文档**：`Datum_Design.md`（Unity 侧 `Documentations~/`，核心评估框架历史设计）
 
 ---
 
@@ -13,11 +13,11 @@
 
 ### 1.1 现状
 
-Datum 当前以 Unity Editor 插件形式运行，提供怪物数值评分、模板发现、权重校准等功能。Phase1+Phase2 已完成数据层解耦：
+Datum 最初以 Unity Editor 插件形式运行（v1.0~v4.0），现已完成平台化迁移：
 
-- `IFoeDataProvider` 接口抽象了数据来源
-- `DatumExportPipeline` 可将 Unity 侧数据导出为通用 JSON
-- Core 计算层已完全无 `UnityEngine`/`UnityEditor` 依赖
+- **Unity 侧**：仅保留 `Export/`（`Datum / Export Json` 菜单），旧版 Workbench（5 Tab）已全部删除
+- **DatumPlatform**：独立的 ASP.NET Core 后端 + React 前端，完整实现评分看板、权重校准、模板分析、健康报告
+- **DatumCore**：纯 C# 计算类库（无 Unity 依赖），后端直接引用
 
 ### 1.2 痛点
 
@@ -40,47 +40,55 @@ Datum 当前以 Unity Editor 插件形式运行，提供怪物数值评分、模
 ## 2. 整体架构
 
 ```
-┌──────────────────────────────────────────────────────────┐
-│  datum-platform/  （独立仓库或 Unity 项目同级目录）         │
-│                                                          │
-│  ┌─────────────────────────────────────────────────────┐ │
-│  │  DatumCore/  (.NET Standard 2.1 类库)                │ │
-│  │  ├── Provider/    IFoeDataProvider + POCO 模型       │ │
-│  │  ├── Snapshot/    属性快照构建                        │ │
-│  │  ├── Resolver/    属性折算                           │ │
-│  │  ├── Metrics/     战斗指标计算                        │ │
-│  │  ├── SkillEval/   技能 DPS + 控制评估                 │ │
-│  │  ├── Aggregator/  Power Mean 评分聚合                 │ │
-│  │  ├── Calibrator/  权重最小二乘校准                    │ │
-│  │  └── Template/    模板发现 + 缩放一致性检查            │ │
-│  └─────────────────────────────────────────────────────┘ │
-│              ↑ 被以下两端同时引用                          │
-│  ┌───────────────────┐   ┌───────────────────────────┐   │
-│  │  Unity Editor     │   │  DatumServer/             │   │
-│  │  (现有 Workbench) │   │  ASP.NET Core 自托管后端   │   │
-│  │  引用 DatumCore   │   │  ├── 读取 datum_export/ JSON│  │
-│  │  通过 Assembly    │   │  ├── REST API              │   │
-│  │  Definition 链接  │   │  ├── WebSocket（实时推送）  │   │
-│  └───────────────────┘   │  └── 内嵌前端静态文件       │   │
-│                          └───────────────────────────┘   │
-│                                    ↓                      │
-│                          ┌───────────────────────────┐   │
-│                          │  datum-web/               │   │
-│                          │  React + Vite + ECharts   │   │
-│                          │  + Ant Design             │   │
-│                          │  前后端分离开发            │   │
-│                          │  发布时嵌入 exe            │   │
-│                          └───────────────────────────┘   │
-└──────────────────────────────────────────────────────────┘
-
-          datum_export/  ← Unity 侧导出，通过 Git 同步
-          ├── monsters.json
-          ├── skill_info.json
-          ├── skill_blueprints.json
-          ├── weight_config.json
-          ├── calibration.json
-          ├── templates.json
-          └── monster_scores.json
+┌─────────────────────────────────────────────────────────────────┐
+│  Unity 项目（仅导出）                                             │
+│  Assets/Editor/Datum/Export/                                      │
+│  ├── DatumExportPipeline.cs    导出管道                           │
+│  └── DatumExportWindow.cs      菜单 Datum/Export Json             │
+│                    │                                              │
+│                    ▼  导出 JSON                                    │
+│           datum_export/*.json ──────────────────┐                 │
+└─────────────────────────────────────────────────│─────────────────┘
+                                                  │
+┌─────────────────────────────────────────────────│─────────────────┐
+│  DatumPlatform/                                 ▼                 │
+│                                                                   │
+│  ┌─────────────────────────────────────────────────────────────┐ │
+│  │  DatumCore/  (.NET 9.0 类库，无 Unity 依赖)                  │ │
+│  │  ├── Provider/    IFoeDataProvider + JsonFoeDataProvider     │ │
+│  │  ├── Snapshot/    属性快照构建                                │ │
+│  │  ├── Resolver/    属性折算                                   │ │
+│  │  ├── Metrics/     战斗指标计算（EHP/DPS/控制）                │ │
+│  │  ├── SkillEval/   技能 DPS + 控制评估                        │ │
+│  │  ├── Aggregator/  Power Mean 评分聚合                        │ │
+│  │  ├── Calibrator/  权重最小二乘校准                            │ │
+│  │  └── Template/    模板发现 + 缩放一致性检查                   │ │
+│  └─────────────────────────────────────────────────────────────┘ │
+│                          ↑ 引用                                   │
+│  ┌─────────────────────────────────────────────────────────────┐ │
+│  │  DatumServer/  (ASP.NET Core 自托管后端)                     │ │
+│  │  ├── Controllers/   REST API（7 个控制器）                   │ │
+│  │  ├── Services/      DatumDataService + FileWatcherService    │ │
+│  │  └── Hubs/          SignalR（实时推送数据更新）               │ │
+│  └─────────────────────────────────────────────────────────────┘ │
+│                          ↓ REST API                               │
+│  ┌─────────────────────────────────────────────────────────────┐ │
+│  │  datum-web/  (React 18 + Vite + Ant Design + ECharts)       │ │
+│  │  ├── ScoreDashboard/     全量评估（难度条 + 详情 + 异常）    │ │
+│  │  ├── WeightCalibration/  权重校准（滑块 + 样本管理 + R²）   │ │
+│  │  ├── TemplateAnalysis/   模板分析（列表 + 柱状图 + 曲线）   │ │
+│  │  └── HealthReport/       健康报告（健康度 + 对比 + 展开）   │ │
+│  └─────────────────────────────────────────────────────────────┘ │
+│                                                                   │
+│  datum_export/  ← Unity 导出 + Git 同步                           │
+│  ├── monsters.json          怪物基础数据                          │
+│  ├── skill_info.json        技能基础配置                          │
+│  ├── skill_blueprints.json  技能蓝图（打击点数据）                │
+│  ├── weight_config.json     权重配置                              │
+│  ├── calibration.json       校准样本                              │
+│  ├── templates.json         模板注册表                            │
+│  └── monster_scores.json    预计算评分结果                        │
+└───────────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -215,31 +223,41 @@ watcher.Changed += async (_, _) => {
 | GET | `/api/templates` | 模板列表 |
 | GET | `/api/templates/{id}/evaluate` | 触发模板评估 |
 | GET | `/api/calibration/samples` | 校准样本列表 |
+| PUT | `/api/calibration/samples` | 保存校准样本（持久化到 calibration.json） |
 | POST | `/api/calibration/run` | 执行权重校准 |
 | GET | `/api/health` | 数值健康报告 |
 
 ### 4.3 datum-web（前端）
 
-#### 页面设计
+#### 页面设计（已全部实现）
 
-**① 评分看板（ScoreDashboard）**  
-全量怪物评分列表 + 散点图（EHP vs DPS）+ 箱线图（各 FoeType 分布）  
-支持：关卡筛选 / 类型筛选 / 搜索 / 排序
+**① 全量评估（ScoreDashboard）** ✅  
+- EHP/DPS **双色难度条**（蓝/橙，hover 显示数值）
+- 点击任意行弹出**右侧详情抽屉**：综合评分、类型系数、EHP/DPS/控制三段进度条、贡献分解
+- **异常检测**：DPS=0、生存/输出悬殊 10x、控制满值时显示黄色 ⚠ 图标 + 详情
+- **关卡筛选**下拉
+- 详情面板内**"添加到校准样本"**按钮（直接调后端保存）
 
-**② 模板分析（TemplateAnalysis）**  
-缩放曲线叠加折线图（多属性不同颜色）+ 变种列表（上行原始值/下行缩放比）  
-一致性问题高亮 + 评分缩放 vs 属性缩放对比
+**② 模板分析（TemplateAnalysis）** ✅  
+- **左侧列表导航**：类型/变种数/基准分/一致性状态（✓⚠）
+- **变种评分柱状图**：标准行灰色，高于橙色，低于蓝色，偏差%标注
+- **缩放曲线图**：属性缩放趋势 + 评分归一化曲线叠加对比
+- **一致性问题描述**：逐变种输出属性均值缩放、预期评分 vs 实际偏差%
 
-**③ 关卡视图（LevelView）**  
-按 `barries_id` 分组展示关卡内怪物强度分布  
-关卡强度热力图（横轴关卡，纵轴评分分位数）
+**③ 权重校准（WeightCalibration）** ✅  
+- **权重滑块**：实时调节生存/输出/控制权重 → 后端重算
+- **样本管理**（SamplesPanel）：每行主观评分滑块 + 数值输入框可实时调整
+- 锚点色标（简单=绿/中等=橙/困难=红）叠加在滑块
+- **保存/删除**样本（带确认弹窗），持久化到 `calibration.json`
+- **最小二乘法校准**：自动求解权重 + R²/MSE + 自然语言解释
+- **散点图**：主观 vs 预测评分
 
-**④ 权重调节（WeightCalibration）**  
-实时权重滑块 → 即时触发后端重算 → 更新评分看板  
-主观评分 vs 预测评分散点图 + R² 拟合度 + 一键校准
-
-**⑤ 数值健康报告（HealthReport）**  
-异常怪物列表（评分 outlier）/ 模板一致性问题 / 关卡难度曲线是否平滑
+**④ 数值健康报告（HealthReport）** ✅  
+- **整体健康度**：圆形进度条（异常怪物-8分/条，模板问题-5分/条）
+- **全局统计**：模板数/已评估/一致性问题/异常怪物
+- **跨模板横向对比**：堆叠条形图（基准分 + 最高分溢出）
+- **一致性问题 Collapse 展开**：逐模板展开查看变种偏差描述
+- **跨模板对比表格**：基准分/最高分/缩放率/变种数/一致性状态
 
 #### 技术选型
 
@@ -419,19 +437,21 @@ public interface IMlAdvisor
 
 ---
 
-## 9. 实施路线（Phase 3+）
+## 9. 实施路线
 
 | Phase | 目标 | 关键任务 | 状态 |
 |---|---|---|---|
-| **Phase 3.1** | DatumCore 独立类库 | `DatumCore.csproj`（.NET Standard 2.1）；所有计算层迁移；`DatumServer` 引用；编译 0 错误 | ✅ 已完成 |
-| **Phase 3.2** | DatumServer 基础 API | 读取 `datum_export/` JSON；实现 7 个 API 控制器；`FileWatcherService` 热重载；SignalR Hub | ✅ 已完成 |
-| **Phase 3.3** | datum-web 基础框架 | Vite + React 脚手架；5 个页面（评分看板/模板/权重/健康/设置）；ECharts 散点图；前端 `localhost:5173` 运行中 | ✅ 已完成 |
-| **Phase 3.4** | 前后端联通 + 示例数据 | 启动 DatumServer；准备 `datum_export/` 示例数据；验证 `/api/health`、`/api/scores` 可返回数据 | 🔄 进行中 |
-| **Phase 3.5** | 打包验证 | `build.ps1` 一键构建；`datum-server.exe` 单文件验证；策划端测试 | 🔲 待实施 |
-| **Phase 3.6** | 完整功能迭代 | 模板分析图表 / 关卡视图 / 权重实时调节 / UpdateBanner 自动更新 | 🔲 待实施 |
+| **Phase 3.1** | DatumCore 独立类库 | `DatumCore.csproj`（.NET 9.0）；所有计算层迁移；`DatumServer` 引用；编译 0 错误 | ✅ 已完成 |
+| **Phase 3.2** | DatumServer 基础 API | 读取 `datum_export/` JSON；7 个 API 控制器；`FileWatcherService` 热重载；SignalR Hub | ✅ 已完成 |
+| **Phase 3.3** | datum-web 基础框架 | Vite + React 脚手架；4 个页面（评分看板/权重校准/模板分析/健康报告）；ECharts 图表 | ✅ 已完成 |
+| **Phase 3.4** | 前后端联通 | 启动 DatumServer + datum-web；验证全部 API 可返回数据；TypeScript 0 错误 | ✅ 已完成 |
+| **Phase 3.5** | 前端功能增强 | ScoreDashboard（难度条+详情+异常+关卡筛选+添加到校准）；WeightCalibration（样本编辑+保存）；TemplateAnalysis（列表+柱状图+曲线+一致性）；HealthReport（健康度+对比+展开） | ✅ 已完成 |
+| **Phase 3.6** | Unity 侧清理 | 删除 Windows/Calibrator/Template/DatumContext 等旧代码；仅保留 Export；更新 README 和设计文档 | ✅ 已完成 |
 | **Phase 4** | Git Hook 自动化 | `post-commit` 触发 Unity 导出；CI 集成 | 🔲 待实施 |
-| **Phase 5** | 跨项目适配 | 第二个项目接入验证；`--data` 参数切换 | 🔲 远期 |
-| **Phase 6** | ML 接入 | `IMlAdvisor` 实现（ML.NET 或 Python 微服务）| 🔲 远期 |
+| **Phase 5** | 打包与分发 | `build.ps1` 一键构建；`datum-server.exe` 单文件验证；策划端测试 | 🔲 待实施 |
+| **Phase 6** | 深度功能演进 | 元素维度 + Buff 维度 + 关卡维度 + 蒙特卡洛仿真（详见第 12 节） | 🔲 远期 |
+| **Phase 7** | 跨项目适配 | 第二个项目接入验证；`--data` 参数切换 | 🔲 远期 |
+| **Phase 8** | ML 接入 | `IMlAdvisor` 实现（ML.NET 或 Python 微服务）| 🔲 远期 |
 
 ---
 
@@ -518,18 +538,151 @@ DatumServer/
 ```
 datum-web/src/
 ├── pages/
-│   ├── ScoreDashboard/          — 评分看板（统计卡片 + EHP/DPS 散点图 + 排序表格）
-│   ├── TemplateAnalysis/        — 模板分析（模板卡片列表）
-│   ├── WeightCalibration/       — 权重调节（实时滑块 + 预览重算）
-│   ├── HealthReport/            — 数值健康报告
+│   ├── ScoreDashboard/          — 全量评估（难度条 + 详情抽屉 + 异常检测 + 关卡筛选 + 添加到校准）
+│   ├── WeightCalibration/       — 权重校准（滑块 + SamplesPanel 样本管理 + 校准 + 散点图）
+│   ├── TemplateAnalysis/        — 模板分析（左侧列表 + 评分柱状图 + 缩放曲线 + 一致性问题）
+│   ├── HealthReport/            — 健康报告（健康度 + 统计 + 跨模板对比 + Collapse 展开）
 │   └── Settings/                — 系统信息
-├── components/
-│   └── UpdateBanner.tsx         — 顶部更新提示条（自动检查新版本）
-├── routes/AppRoutes.tsx
-├── api/client.ts                — axios 封装
+├── types/
+│   └── datum.ts                 — TypeScript 类型定义（EntityScore/WeightConfig/MonsterTemplate 等）
+├── api/
+│   └── datum.ts                 — REST API 客户端（axios 封装）
 ├── App.tsx                      — 布局 + 导航 + SignalR 连接
 └── main.tsx                     — React 入口（Ant Design 暗色主题）
 ```
 
+---
+
+## 12. 未来演进方向（Phase 6）
+
+> 以下是 Datum 评估框架的深度功能演进方向，当前均为规划阶段，按优先级和收益排序。
+> 这些方向将在 DatumPlatform 中实现，不再回到 Unity 侧。
+
+### 12.1 方向 A：元素维度纳入（补全 DPS 精度）
+
+**现状**：v2 的 DPS 是纯物理伤害，完全忽略了元素攻击/元素抗性。实际战斗中元素伤害占比不小。
+
+**数据基础**：`DatumFoeRow` 已包含 `Ice_res / Fire_res / Poi_res / Ele_res` 四项元素抗性（快照中已提取）。
+
+**实现思路**：
+- 从 `SkillConfigAsset` 或配置表读取技能的元素类型（火/冰/毒/雷）
+- DPS 修正公式：`element_dps = base_dps × (1 - element_resistance / 10000)`
+- 导出时在 `skill_blueprints.json` 中新增 `ElementType` 字段
+- 后端 `CombatMetricsCalculator` 增加元素抗性折算
+
+**难点**：需要确定每个技能的元素类型数据来源（配置表 vs 技能蓝图资产）。
+
+**收益**：中等。对纯物理怪物无影响，但对元素类怪物/Boss 评分更准确。
+
+**工作量**：1-2 天。
+
+### 12.2 方向 B：Buff 维度（技能附带效果）
+
+**现状**：很多怪物技能附带 Buff（增伤/减伤/DOT/控制），v2 完全忽略了这部分。
+
+**实现思路**：
+- 从 `SkillAddBuffAbilityConfig` 读取技能附带的 BuffID
+- 查 Buff 配置表，提取效果类型：
+  - DPS 类 Buff（DOT、增伤）→ 折算为额外 DPS
+  - 控制类 Buff（减速、眩晕、沉默）→ 折算为额外控制分
+  - 防御类 Buff（加防、减伤）→ 折算为额外 EHP
+- 导出时在 `skill_blueprints.json` 中新增 `AttachedBuffs` 数组
+
+**难点**：Buff 配置表结构复杂，效果类型多样，需要逐类解析和映射。
+
+**收益**：高。对 Boss 型怪物尤其重要，因为 Boss 的难度很大程度来自 Buff 而非直接伤害。
+
+**工作量**：4-5 天。
+
+### 12.3 方向 C：关卡维度聚合升级
+
+**现状**：ScoreDashboard 支持按 `barries_id` 筛选关卡，但仅展示单体评分列表，没有关卡级别的聚合分析。
+
+**实现思路**：
+- **波次结构解析**：从 `MazeTriggerBrushFoeV8` 读取波次配置（触发器 → 波次 → 怪物列表 + 间隔时间）
+- **同时在场难度**：同一波次的怪物评分叠加 vs 全关卡累加
+- **关卡难度曲线**：时间线视图，随时间推移的难度变化
+- **关卡强度热力图**：横轴关卡 ID，纵轴评分分位数（P25/P50/P75/P95）
+- 新增前端页面 `LevelView`（已在架构中预留）
+
+**导出扩展**：新增 `level_structure.json`，包含波次结构、触发条件、怪物配置 ID 列表。
+
+**难点**：刷怪系统的波次逻辑比较复杂（区域触发 + 间隔时间 + 加权随机采样）。
+
+**收益**：中高。让策划看到"关卡的哪个阶段最难"，而不是只看一个聚合数字。
+
+**工作量**：3-4 天。
+
+### 12.4 方向 D：蒙特卡洛仿真（Slow Evaluator）
+
+**现状**：所有计算都是解析公式（Fast Evaluator），无法处理随机性（暴击、闪避、概率触发的 Buff）。
+
+**设计思想**（详见 `Datum_Design.md` 第 2.2 节双评估器架构）：
+```
+Fast Evaluator（当前已实现）
+  解析公式 → 毫秒级，用于实时显示
+  输出：近似评分
+
+Slow Evaluator（蒙特卡洛仿真）
+  简化战斗仿真 × N 轮
+  输出：TTK/TTS 统计分布（均值 ± 标准差，P50/P95）
+```
+
+**实现思路**：
+- 构建**简化版战斗仿真器**（不需要完整帧同步，只需攻防回合制模拟）
+- 模拟 N 轮（如 1000 轮），统计 TTK（击杀时间）/ TTS（生存时间）分布
+- 考虑暴击率/暴击伤害、闪避率、格挡率、元素抗性等随机因素
+- 输出置信区间：`Score = mean ± 1.96σ`
+- 仿真结果可用于自动校准权重（替代手动标注 + 最小二乘法）
+
+**架构位置**：
+- 后端新增 `DatumCore/Simulator/` 模块
+- REST API 新增 `POST /api/simulate` 接口
+- 前端新增仿真结果可视化（TTK 分布直方图、置信区间条）
+
+**难点**：工作量最大，需要复刻伤害公式链、暴击逻辑、闪避逻辑。
+
+**收益**：最高但最远。能处理所有随机性，提供置信区间，并可用于校准权重。
+
+**工作量**：1 周+。
+
+### 12.5 优先级排序
+
+| 优先级 | 方向 | 工作量 | 理由 |
+|---|---|---|---|
+| **P1** | A：元素维度 | 1-2天 | 补全 DPS 精度，数据已就绪，工作量小 |
+| **P1** | C：关卡维度 | 3-4天 | 从"单体评估"升级为"关卡设计辅助"，对策划价值跃升 |
+| **P2** | B：Buff 维度 | 4-5天 | 重要但复杂，需要 Buff 配置表的深入分析 |
+| **P3** | D：蒙特卡洛仿真 | 1周+ | 长期目标，工作量最大，需要复刻战斗逻辑 |
+
+### 12.6 各方向对评分管线的影响
+
+```
+当前管线：
+Snapshot → Resolver → Metrics(EHP/DPS/Control) → SkillEval → Aggregator → Score
+
+方向 A（元素）：
+  影响 Metrics 层 — DPS 计算增加元素修正
+  影响 SkillEval — 读取技能元素类型
+  导出扩展：skill_blueprints.json + ElementType
+
+方向 B（Buff）：
+  影响 SkillEval — 新增 Buff 效果解析
+  影响 Metrics 层 — DPS/EHP/Control 均可能受 Buff 修正
+  导出扩展：skill_blueprints.json + AttachedBuffs[]
+
+方向 C（关卡）：
+  不影响现有管线 — 在 Score 之上新增聚合层
+  新增：LevelAggregator（波次结构 + 同时在场叠加）
+  导出扩展：新增 level_structure.json
+
+方向 D（仿真）：
+  与现有管线并行 — 独立的 Slow Evaluator
+  新增：Simulator 模块（攻防回合制 × N 轮蒙特卡洛）
+  可替代 Aggregator 的权重校准数据源
+```
+
+---
+
 *最后更新：2026-03-02*  
-*版本：v1.2 — Phase 3.1/3.2/3.3 完成，前端已运行，后端待联通*
+*版本：v2.0 — Phase 3 全部完成（后端 + 4 个前端页面 + Unity 侧清理），未来演进方向规划中*

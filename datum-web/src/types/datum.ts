@@ -50,13 +50,23 @@ export interface MonsterTemplate {
 export interface DatumFoeRow {
   configId: number
   name: string
+  level: number
   foeType: number
+  modelId: number
   barriesId: number
   hp: number
   attack: number
   defence: number
-  atkSpeed: number
   toughMax: number
+  speed: number
+  attackSpeedPro: number
+  iceRes: number
+  fireRes: number
+  poisonRes: number
+  eleRes: number
+  norAttackSkillId: number
+  attackSkillIds: number[]
+  passiveSkillIds: number[]
 }
 
 export interface HealthInfo {
@@ -95,4 +105,21 @@ export const FOE_TYPE_COLORS: Record<number, string> = {
   3: 'orange',
   4: 'red',
   5: 'green',
+}
+
+// 元素类型（ControlElementAttrResType 枚举）
+export const ELEMENT_LABELS: Record<number, string> = {
+  0: '物理',
+  1: '冰',
+  2: '火',
+  3: '毒',
+  4: '电',
+}
+
+export const ELEMENT_COLORS: Record<number, string> = {
+  0: '#aaa',
+  1: '#61dafb',
+  2: '#ff6b35',
+  3: '#a855f7',
+  4: '#facc15',
 }

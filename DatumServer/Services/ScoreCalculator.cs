@@ -1,4 +1,5 @@
 using Datum.Core.Aggregator;
+using Datum.Core.BuffEvaluator;
 using Datum.Core.Metrics;
 using Datum.Core.Provider;
 using Datum.Core.Resolver;
@@ -34,8 +35,9 @@ namespace Datum.Server.Services
                     snapshot.Metadata.AttackSkillIds,
                     snapshot.Metadata.NorAttackSkillId,
                     resolved.FinalAtk, provider);
+                var buff     = BuffEvaluator.Evaluate(row, provider);
                 var metrics  = CombatMetricsCalculator.Calculate(
-                    resolved, weightConfig.baseline_atk, weightConfig.baseline_def, skill);
+                    resolved, weightConfig.baseline_atk, weightConfig.baseline_def, skill, buff);
                 return ScoreAggregator.Aggregate(metrics, snapshot.Metadata, weightConfig);
             }
             catch

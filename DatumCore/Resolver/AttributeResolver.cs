@@ -9,6 +9,13 @@ namespace Datum.Core.Resolver
         public float FinalHP;
         public float AtkSpeedPro;
         public float ToughMax;
+
+        // 元素抗性（万分比）
+        public float IceRes;
+        public float FireRes;
+        public float PoisonRes;
+        public float EleRes;
+
         public SnapshotMetadata Metadata;
     }
 
@@ -16,33 +23,19 @@ namespace Datum.Core.Resolver
     {
         public static ResolvedAttributeSnapshot Resolve(AttributeSnapshot snapshot)
         {
-            float baseAtk     = snapshot.GetAttr(MonsterSnapshotBuilder.RoleAtkValue);
-            float addAtk      = snapshot.GetAttr(MonsterSnapshotBuilder.RoleAtkValueAdd);
-            float addAtkRatio = snapshot.GetAttr(MonsterSnapshotBuilder.RoleAtkValueAddRatio);
-
-            float baseDef     = snapshot.GetAttr(MonsterSnapshotBuilder.RoleDefValue);
-            float addDef      = snapshot.GetAttr(MonsterSnapshotBuilder.RoleDefValueAdd);
-            float addDefRatio = snapshot.GetAttr(MonsterSnapshotBuilder.RoleDefValueAddRatio);
-
-            float baseHP      = snapshot.GetAttr(MonsterSnapshotBuilder.RoleHPValue);
-            float addHP       = snapshot.GetAttr(MonsterSnapshotBuilder.RoleHPValueAdd);
-            float addHPRatio  = snapshot.GetAttr(MonsterSnapshotBuilder.RoleHPValueAddRatio);
-
-            float atkSpeedPro = snapshot.GetAttr(MonsterSnapshotBuilder.AtkSpeed);
-            float toughMax    = snapshot.GetAttr(MonsterSnapshotBuilder.ToughMax);
-
             return new ResolvedAttributeSnapshot
             {
-                FinalAtk    = CalcFinalValue(baseAtk, addAtk, addAtkRatio),
-                FinalDef    = CalcFinalValue(baseDef, addDef, addDefRatio),
-                FinalHP     = baseHP > 0 ? CalcFinalValue(baseHP, addHP, addHPRatio) : 0f,
-                AtkSpeedPro = atkSpeedPro,
-                ToughMax    = toughMax,
+                FinalAtk    = snapshot.GetAttr(MonsterSnapshotBuilder.RoleAtkValue),
+                FinalDef    = snapshot.GetAttr(MonsterSnapshotBuilder.RoleDefValue),
+                FinalHP     = snapshot.GetAttr(MonsterSnapshotBuilder.RoleHPValue),
+                AtkSpeedPro = snapshot.GetAttr(MonsterSnapshotBuilder.AtkSpeedPro),
+                ToughMax    = snapshot.GetAttr(MonsterSnapshotBuilder.ToughMax),
+                IceRes      = snapshot.GetAttr(MonsterSnapshotBuilder.IceRes),
+                FireRes     = snapshot.GetAttr(MonsterSnapshotBuilder.FireRes),
+                PoisonRes   = snapshot.GetAttr(MonsterSnapshotBuilder.PoisonRes),
+                EleRes      = snapshot.GetAttr(MonsterSnapshotBuilder.EleRes),
                 Metadata    = snapshot.Metadata,
             };
         }
-
-        private static float CalcFinalValue(float baseVal, float addVal, float addRatio)
-            => (baseVal + addVal) * (1f + addRatio / 10000f);
     }
 }

@@ -11,6 +11,8 @@ namespace Datum.Core.Provider
         bool TryGetFoeRow(int configId, out DatumFoeRow row);
         DatumSkillBlueprint GetSkillBlueprint(int skillId);
         DatumSkillInfoRow GetSkillInfoRow(int skillId);
+        DatumBuffConfigRow GetBuffConfig(int buffConfigId);
+        IReadOnlyList<DatumBuffConfigRow> GetAllBuffConfigs();
         void ClearCache();
     }
 }
