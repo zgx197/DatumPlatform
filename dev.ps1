@@ -28,6 +28,7 @@ $BackendPort  = 7000
 $FrontendPort = 5173
 $BackendUrl   = "http://localhost:$BackendPort"
 $FrontendUrl  = "http://localhost:$FrontendPort"
+$PidFile      = Join-Path $ScriptRoot ".datum-dev-pids"
 
 Write-Host ""
 Write-Host "=== DatumPlatform Dev Launcher ===" -ForegroundColor Cyan
@@ -49,14 +50,35 @@ function Stop-PortProcess {
     }
 }
 
-# Clean up old processes
+# Kill process by saved PID (handles orphaned cmd/terminal windows)
+function Stop-SavedPid {
+    param([string]$Key)
+    if (Test-Path $PidFile) {
+        $pids = Get-Content $PidFile | ConvertFrom-StringData -ErrorAction SilentlyContinue
+        if ($pids -and $pids[$Key]) {
+            $savedPid = [int]$pids[$Key]
+            Stop-Process -Id $savedPid -Force -ErrorAction SilentlyContinue
+        }
+    }
+}
+
+# Save PIDs to file for cleanup on next run
+function Save-Pids {
+    param([int]$BackendPid, [int]$FrontendPid)
+    "BackendPid=$BackendPid`nFrontendPid=$FrontendPid" | Set-Content $PidFile
+}
+
+# Clean up old processes (PID file first, then port fallback)
 if (-not $FrontendOnly) {
-    Write-Host "[clean] Stopping old backend (port $BackendPort)..." -ForegroundColor DarkGray
+    Write-Host "[clean] Stopping old backend..." -ForegroundColor DarkGray
+    Stop-SavedPid -Key "BackendPid"
     Stop-PortProcess -Port $BackendPort
 }
 if (-not $BackendOnly) {
-    Write-Host "[clean] Stopping old frontend (port $FrontendPort)..." -ForegroundColor DarkGray
+    Write-Host "[clean] Stopping old frontend (cmd window + port)..." -ForegroundColor DarkGray
+    Stop-SavedPid -Key "FrontendPid"   # kills the cmd.exe window itself
     Stop-PortProcess -Port $FrontendPort
+    Start-Sleep -Milliseconds 300       # give time for port release
 }
 
 # Step 1: Build backend
@@ -144,6 +166,11 @@ if (-not $BackendOnly) {
     Write-Host "[3/3] Frontend ready: $FrontendUrl" -ForegroundColor Green
 }
 
+# Save PIDs for cleanup on next run
+Save-Pids `
+    -BackendPid  (if ($backendProc)  { $backendProc.Id  } else { 0 }) `
+    -FrontendPid (if ($frontendProc) { $frontendProc.Id } else { 0 })
+
 # Open browser
 if (-not $BackendOnly) {
     Start-Sleep -Milliseconds 500
@@ -163,6 +190,6 @@ Write-Host ""
 Write-Host "  Backend PID : $(if ($backendProc) { $backendProc.Id } else { 'N/A' })"
 Write-Host "  Frontend PID: $(if ($frontendProc) { $frontendProc.Id } else { 'N/A' })"
 Write-Host ""
-Write-Host "  To stop: close the minimized terminal windows, or run:" -ForegroundColor DarkYellow
-Write-Host "    Stop-Process -Id $(if ($backendProc) { $backendProc.Id } else { '<id>' })" -ForegroundColor DarkGray
+Write-Host "  To stop: re-run dev.ps1 (auto-cleans on next start), or run:" -ForegroundColor DarkYellow
+Write-Host "    Stop-Process -Id $(if ($backendProc) { $backendProc.Id } else { '<id>' }) $(if ($frontendProc) { $frontendProc.Id } else { '' })" -ForegroundColor DarkGray
 Write-Host "==========================================" -ForegroundColor Cyan

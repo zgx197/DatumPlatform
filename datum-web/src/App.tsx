@@ -1,5 +1,5 @@
-import { App as AntdApp, Button, Layout, Menu, Tooltip } from 'antd'
-import { useState, useEffect } from 'react'
+import { App as AntdApp, Button, Layout, Menu, Tooltip, Badge } from 'antd'
+import { useState, useEffect, useCallback } from 'react'
 import { BrowserRouter, useNavigate, useLocation } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import {
@@ -10,11 +10,14 @@ import {
   BugOutlined,
   EnvironmentOutlined,
   BookOutlined,
+  RobotOutlined,
 } from '@ant-design/icons'
 import * as signalR from '@microsoft/signalr'
 import AppRoutes from './routes/AppRoutes'
 import UpdateBanner from './components/UpdateBanner'
 import DebugPanel, { installGlobalHandlers } from './components/DebugPanel'
+import AiChatDrawer from './components/AiChatDrawer'
+import { getEffectiveKeys, matchEvent } from './services/shortcuts'
 import './App.css'
 
 installGlobalHandlers()
@@ -36,7 +39,29 @@ function AppLayout() {
   const location = useLocation()
   const queryClient = useQueryClient()
   const [collapsed, setCollapsed] = useState(false)
+  const [chatOpen, setChatOpen] = useState(false)
+  const [debugOpen, setDebugOpen] = useState(false)
   const { notification: antNotification } = AntdApp.useApp()
+
+  // 全局快捷键注册（从 shortcuts 服务读取当前按键配置）
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      // 如果焦点在输入框内则跳过页面跳转快捷键（但 AI 助手和调试面板仍然生效）
+      const tag = (e.target as HTMLElement)?.tagName
+      const inInput = tag === 'INPUT' || tag === 'TEXTAREA' || (e.target as HTMLElement)?.isContentEditable
+
+      if (matchEvent(e, getEffectiveKeys('toggle-ai-chat')))    { e.preventDefault(); setChatOpen(p => !p); return }
+      if (matchEvent(e, getEffectiveKeys('toggle-debug-panel'))) { e.preventDefault(); setDebugOpen(p => !p); return }
+      if (inInput) return
+      if (matchEvent(e, getEffectiveKeys('go-dashboard')))   { e.preventDefault(); navigate('/'); return }
+      if (matchEvent(e, getEffectiveKeys('go-templates')))   { e.preventDefault(); navigate('/templates'); return }
+      if (matchEvent(e, getEffectiveKeys('go-levels')))      { e.preventDefault(); navigate('/levels'); return }
+      if (matchEvent(e, getEffectiveKeys('go-calibration'))) { e.preventDefault(); navigate('/calibration'); return }
+      if (matchEvent(e, getEffectiveKeys('go-settings')))    { e.preventDefault(); navigate('/settings'); return }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [navigate])
 
   // SignalR 实时数据更新：文件变更后自动刷新所有查询
   useEffect(() => {
@@ -114,11 +139,12 @@ function AppLayout() {
               <Button
                 type="text"
                 icon={<BugOutlined />}
+                onClick={() => setDebugOpen(true)}
                 style={{ color: '#8b949e', width: '100%' }}
               />
             </Tooltip>
           ) : (
-            <DebugPanel />
+            <DebugPanel externalOpen={debugOpen} onExternalClose={() => setDebugOpen(false)} />
           )}
         </div>
       </Sider>
@@ -133,7 +159,29 @@ function AppLayout() {
           justifyContent: 'space-between',
         }}>
           <UpdateBanner />
+          <Tooltip title={`AI 助手 (${getEffectiveKeys('toggle-ai-chat')})`}>
+            <Button
+              icon={<RobotOutlined />}
+              onClick={() => setChatOpen(true)}
+              style={{
+                background: 'linear-gradient(135deg, #1f6feb 0%, #8b5cf6 100%)',
+                border: 'none',
+                color: '#fff',
+                fontWeight: 600,
+                borderRadius: 20,
+                padding: '0 16px',
+                height: 34,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                boxShadow: '0 0 12px rgba(31,111,235,0.4)',
+              }}
+            >
+              AI 助手
+            </Button>
+          </Tooltip>
         </Header>
+        <AiChatDrawer open={chatOpen} onClose={() => setChatOpen(false)} />
         <Content style={{ overflow: 'auto', padding: 24 }}>
           <AppRoutes />
         </Content>

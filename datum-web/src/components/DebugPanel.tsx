@@ -93,12 +93,15 @@ export function installGlobalHandlers() {
 
   console.error = (...args: unknown[]) => {
     origError(...args)
+    // 过滤已知噪音：SignalR 连接协商失败（后端未启动时的预期行为）
+    const msg = formatMessage(args)
+    if (msg.includes('Failed to start the connection') || msg.includes('stopped during negotiation')) return
     const apiMeta = extractApiError(args)
     const err = args.find(a => a instanceof Error) as Error | undefined
     const stk = simplifyStack(err?.stack)
     _addLog?.({
       level: 'error',
-      message: formatMessage(args),
+      message: msg,
       shortStack: stk?.short,
       fullStack: stk?.full,
       apiError: apiMeta,
@@ -107,9 +110,12 @@ export function installGlobalHandlers() {
 
   console.warn = (...args: unknown[]) => {
     origWarn(...args)
+    // 过滤已知噪音：KaTeX Unicode 字符在数学模式中的警告（中文公式的预期行为）
+    const warnMsg = formatMessage(args)
+    if (warnMsg.includes('unicodeTextInMathMode')) return
     _addLog?.({
       level: 'warn',
-      message: formatMessage(args),
+      message: warnMsg,
     })
   }
 
@@ -198,10 +204,22 @@ function buildAiReport(logs: LogEntry[]): string {
 // ─── 组件主体 ──────────────────────────────────────────────────────────────
 type FilterLevel = 'all' | 'error' | 'warn'
 
-export default function DebugPanel() {
+interface DebugPanelProps {
+  externalOpen?: boolean
+  onExternalClose?: () => void
+}
+
+export default function DebugPanel({ externalOpen, onExternalClose }: DebugPanelProps = {}) {
   const [logs, setLogs] = useState<LogEntry[]>([])
-  const [open, setOpen] = useState(false)
+  const [internalOpen, setInternalOpen] = useState(false)
   const [unread, setUnread] = useState(0)
+
+  // 合并内部和外部的 open 状态
+  const open = internalOpen || !!externalOpen
+  const setOpen = (v: boolean) => {
+    setInternalOpen(v)
+    if (!v && onExternalClose) onExternalClose()
+  }
   const [expandedId, setExpandedId] = useState<number | null>(null)
   const [filter, setFilter] = useState<FilterLevel>('all')
   const bottomRef = useRef<HTMLDivElement>(null)
@@ -209,8 +227,11 @@ export default function DebugPanel() {
   useEffect(() => {
     _addLog = (entry) => {
       const newEntry: LogEntry = { ...entry, id: ++_counter, time: formatTime(new Date()) }
-      setLogs(prev => [...prev.slice(-299), newEntry])
-      setUnread(prev => prev + 1)
+      // 延迟到微任务，避免在其他组件渲染期间同步 setState（React 18 严格模式警告）
+      queueMicrotask(() => {
+        setLogs(prev => [...prev.slice(-299), newEntry])
+        setUnread(prev => prev + 1)
+      })
     }
     return () => { _addLog = null }
   }, [])

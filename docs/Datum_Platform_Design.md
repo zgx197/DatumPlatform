@@ -460,7 +460,10 @@ public interface IMlAdvisor
 | **Phase 6a** | 元素/Buff 维度集成 | BuffEvaluator + 元素抗性修正 + DPS/控制分解 + 前端可视化增强 | ✅ 已完成 |
 | **Phase 6b** | 关卡维度聚合 | LevelAggregator（波次聚合 + 难度曲线 + 加速曲线）；LevelView 前端页面；`level_structure.json` 导出 | ✅ 已完成 |
 | **Phase 6c** | 调试体验 + Bug 修复 | DebugPanel（全局错误捕获 + AI 友好导出）；calibration.json 字段兼容；wave duplicate key 修复；antd 静态 API 修复 | ✅ 已完成 |
-| **Phase 4** | Git Hook 自动化 | `post-commit` 触发 Unity 导出；CI 集成 | 🔲 待实施 |
+| **Phase 6d** | 易用性优化 + 数据导出 + 系统文档 | WorkflowGuide 工作流引导；关键指标 Tooltip 说明；校准样本自动预填分；difficulty-tiers API；系统文档页（KaTeX + Mermaid） | ✅ 已完成 |
+| **Phase 6e** | AI 助手 + 快捷键系统 | AI 助手：前端直连 Kimi/OpenAI/DeepSeek API（Function Calling）；12 个 Tool Functions；API Key 存 localStorage；流式输出 + Markdown 渲染；侧边抽屉 + 思考动画 + Tool 状态。快捷键系统：7 个内置快捷键（AI/调试/页面跳转）；设置页可视化编辑 + 录入覆盖 + 恢复默认；配置存 localStorage。Bug 修复：Spin tip 警告、setState during render、SignalR 噪音过滤 | ✅ 已完成 |
+| **Phase 6f** | Prompt 规则 + AI 聊天增强 + 显示设置 + Bug 修复 | Prompt 规则系统：8 条内置规则（LaTeX/Mermaid/表格/中文/数据驱动/分步/异常高亮/简洁）；自定义规则；动态注入 System Prompt。AI 聊天增强：LaTeX 公式渲染（remark-math + rehype-katex + 裸命令预处理器 + strict:false 中文支持）；Mermaid 流程图渲染（共享 MermaidBlock 组件）。显示设置：uiPrefs 全局偏好服务；AI 聊天字体大小切换（标题栏快捷 + 设置页双向同步）；存 localStorage。Bug 修复：DebugPanel 过滤 unicodeTextInMathMode 噪音；dev.ps1 PID 文件机制（防止 cmd 窗口累积） | ✅ 已完成 |
+| **Phase 4** | Git Hook 自动化 | `post-commit` 触发 Unity 导出；CI 集成 | � 待实施 |
 | **Phase 5** | 打包与分发 | `build.ps1` 一键构建；`datum-server.exe` 单文件验证；策划端测试 | 🔲 待实施 |
 | **Phase 7** | 跨项目适配 | 第二个项目接入验证；`--data` 参数切换 | 🔲 远期 |
 | **Phase 8** | ML 接入 | `IMlAdvisor` 实现（ML.NET 或 Python 微服务）| 🔲 远期 |
@@ -660,4 +663,4 @@ Snapshot → Resolver → Metrics(EHP/DPS/Control) → SkillEval → Aggregator 
 ---
 
 *最后更新：2026-03-02*  
-*版本：v3.1 — Phase 6b/6c 完成（LevelAggregator + LevelView + DebugPanel + 校准样本字段兼容 + 多处 duplicate key 修复）*
+*版本：v3.7 — Phase 6f 完成（Prompt 规则 + LaTeX/Mermaid 渲染 + 字体大小设置 + KaTeX 中文 Unicode 修复 + dev.ps1 终端殘留修复）*

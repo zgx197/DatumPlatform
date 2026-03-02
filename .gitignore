@@ -33,6 +33,9 @@ logs/
 *.temp
 datum_export_log.txt
 
+# dev.ps1 运行时 PID 记录（本地临时文件）
+.datum-dev-pids
+
 # ============================================================
 # 运行时数据（datum_export/ 由 Unity 侧导出并单独管理）
 # datum_export/ 应被追踪（配置表 JSON 需要 Git 同步）
