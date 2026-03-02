@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { App as AntdApp, Card, Slider, Button, Typography, Space, Row, Col, Statistic, Table, Tag, Alert, Divider, Progress, InputNumber, Popconfirm } from 'antd'
-import { ThunderboltOutlined, SaveOutlined, DeleteOutlined } from '@ant-design/icons'
+import { App as AntdApp, Card, Slider, Button, Typography, Space, Row, Col, Statistic, Table, Tag, Alert, Divider, Progress, InputNumber, Popconfirm, Tooltip } from 'antd'
+import { ThunderboltOutlined, SaveOutlined, DeleteOutlined, QuestionCircleOutlined, BulbOutlined } from '@ant-design/icons'
 import { useState, useEffect, useMemo } from 'react'
 import ReactECharts from 'echarts-for-react'
 import { datumApi } from '../../api/datum'
@@ -9,9 +9,25 @@ import { FOE_TYPE_LABELS, FOE_TYPE_COLORS } from '../../types/datum'
 
 const { Title, Text } = Typography
 
+const WEIGHT_TIPS: Record<string, string> = {
+  'EHP 权重（生存）': 'EHP = 等效生命值，综合了 HP、防御、元素抗性、被动Buff。权重越高，生存能力强的怪物评分越高。建议范围：0.3~0.6。',
+  'DPS 权重（输出）': 'DPS = 每秒伤害，综合了技能DPS和DOT伤害。权重越高，输出型怪物评分越高。建议范围：0.3~0.5。',
+  '控制权重': '控制 = 技能控制时长 + Buff控制效果，归一化到 0~1。由于控制评分绝对值较小，权重通常设低一些（0.1~0.3）。',
+}
+
 function WeightSlider({ label, value, onChange }: { label: string; value: number; onChange: (v: number) => void }) {
+  const tip = WEIGHT_TIPS[label]
   return (
-    <Card size="small" title={label} style={{ textAlign: 'center' }}>
+    <Card size="small" title={
+      <Space size={4}>
+        {label}
+        {tip && (
+          <Tooltip title={tip}>
+            <QuestionCircleOutlined style={{ color: '#8b949e', fontSize: 12, cursor: 'help' }} />
+          </Tooltip>
+        )}
+      </Space>
+    } style={{ textAlign: 'center' }}>
       <Slider min={0} max={1} step={0.01} value={value} onChange={onChange} />
       <Statistic value={(value * 100).toFixed(0)} suffix="%" valueStyle={{ fontSize: 20 }} />
     </Card>
@@ -253,7 +269,14 @@ function CalibrationPanel({ onApply, localSampleCount }: { onApply: (w: Partial<
               </Card>
             </Col>
             <Col span={6}>
-              <Card size="small" title="拟合度 R²">
+              <Card size="small" title={
+                <Tooltip title="R²（决定系数）衡量拟合优度：≥0.9 优秀，≥0.7 良好，<0.5 说明主观评分与怪物属性相关性低，建议重新标注评分样本。">
+                  <Space size={4}>
+                    拟合度 R²
+                    <QuestionCircleOutlined style={{ color: '#8b949e', fontSize: 11, cursor: 'help' }} />
+                  </Space>
+                </Tooltip>
+              }>
                 <Progress
                   type="circle" size={60}
                   percent={Math.round(calibResult.rSquared * 100)}
@@ -298,6 +321,11 @@ function SamplesPanel({ onSamplesChange }: { onSamplesChange: (samples: Calibrat
     queryFn: () => datumApi.calibrationSamples(),
   })
 
+  const { data: allScores = [] } = useQuery<EntityScore[]>({
+    queryKey: ['scores'],
+    queryFn: () => datumApi.scores(),
+  })
+
   const [localSamples, setLocalSamples] = useState<CalibrationSample[]>([])
   const [dirty, setDirty] = useState(false)
 
@@ -337,6 +365,28 @@ function SamplesPanel({ onSamplesChange }: { onSamplesChange: (samples: Calibrat
   const removeSample = (configId: number) => {
     setLocalSamples(prev => prev.filter(s => s.configId !== configId))
     setDirty(true)
+  }
+
+  // 一键自动预填分：根据 overallScore 相对排名，线性映射到1~9，保留小数一位
+  const autoFillScores = () => {
+    if (localSamples.length === 0) return
+    const scoreMap = new Map(allScores.map(s => [s.configId, s.overallScore]))
+    const withScore = localSamples.map(s => ({
+      ...s,
+      _overall: scoreMap.get(s.configId) ?? 0,
+    }))
+    const vals = withScore.map(s => s._overall)
+    const minV = Math.min(...vals)
+    const maxV = Math.max(...vals)
+    const range = maxV - minV
+    setLocalSamples(withScore.map(({ _overall, ...s }) => ({
+      ...s,
+      subjectiveScore: range > 0
+        ? Math.round((((_overall - minV) / range) * 8 + 1) * 10) / 10  // 1~9, 1位小数
+        : 5,
+    })))
+    setDirty(true)
+    message.info('已根据评分相对大小自动预填，请根据实际游戏感受调整')
   }
 
   const ANCHOR_COLORS = ['#52c41a', '#faad14', '#ff4d4f']
@@ -406,6 +456,16 @@ function SamplesPanel({ onSamplesChange }: { onSamplesChange: (samples: Calibrat
       extra={
         <Space>
           {dirty && <Text type="warning" style={{ fontSize: 12 }}>有未保存的修改</Text>}
+          <Tooltip title="根据怪物综合评分的相对大小，自动映射到 1~9 分（最弱→1，最强→9）。可作为主观标注的起点，再手动微调。">
+            <Button
+              size="small"
+              icon={<BulbOutlined />}
+              onClick={autoFillScores}
+              disabled={localSamples.length === 0}
+            >
+              自动预填分
+            </Button>
+          </Tooltip>
           <Button
             type="primary" size="small"
             icon={<SaveOutlined />}

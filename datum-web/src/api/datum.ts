@@ -8,6 +8,7 @@ import type {
   CalibrationSample,
   LevelStructure,
   LevelMetrics,
+  DifficultyTiersSummary,
 } from '../types/datum'
 
 export const datumApi = {
@@ -52,4 +53,7 @@ export const datumApi = {
 
   levelMetricsById: (levelId: number, lifetime?: number): Promise<LevelMetrics> =>
     api.get(`/levels/metrics/${levelId}`, { params: lifetime != null ? { lifetime } : undefined }).then(r => r.data),
+
+  difficultyTiers: (): Promise<DifficultyTiersSummary> =>
+    api.get('/difficulty-tiers').then(r => r.data),
 }

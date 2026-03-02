@@ -4,6 +4,7 @@ using Datum.Core.LevelAggregator;
 using Datum.Core.Provider;
 using Datum.Core.Calibrator;
 using Datum.Core.Template;
+using Datum.Server.Models;
 
 namespace Datum.Server.Services
 {
@@ -142,6 +143,51 @@ namespace Datum.Server.Services
         {
             _weightConfig = weights;
             RecalculateScores();
+        }
+
+        /// <summary>
+        /// 生成难度档位摘要（供外部工具如关卡编辑器消费）。
+        /// 阈值基于当前评分的百分位数自动划定：P33=easy/medium分界，P66=medium/hard，P90=hard/boss。
+        /// </summary>
+        public DifficultyTiersSummary GetDifficultyTiers()
+        {
+            var scores = _cachedScores;
+            if (scores.Count == 0)
+                return new DifficultyTiersSummary();
+
+            var sorted = scores.Select(s => s.OverallScore).OrderBy(v => v).ToList();
+            float Percentile(int pct) => sorted[(int)Math.Min(Math.Floor(sorted.Count * pct / 100.0), sorted.Count - 1)];
+
+            var thresholds = new DifficultyThresholds
+            {
+                Easy   = (float)Math.Round(Percentile(33), 3),
+                Medium = (float)Math.Round(Percentile(66), 3),
+                Hard   = (float)Math.Round(Percentile(90), 3),
+            };
+
+            string Tier(float v) => v < thresholds.Easy ? "easy"
+                : v < thresholds.Medium ? "medium"
+                : v < thresholds.Hard   ? "hard"
+                : "boss";
+
+            var monsters = scores.Select(s => new MonsterTierEntry
+            {
+                ConfigId  = s.ConfigId,
+                Name      = s.Name,
+                FoeType   = s.FoeType,
+                Score     = (float)Math.Round(s.OverallScore, 3),
+                EhpScore  = (float)Math.Round(s.EHPScore, 3),
+                DpsScore  = (float)Math.Round(s.DPSScore, 3),
+                BarriesId = s.BarriesId,
+                Tier      = Tier(s.OverallScore),
+            }).OrderByDescending(m => m.Score).ToList();
+
+            return new DifficultyTiersSummary
+            {
+                GeneratedAt = DateTime.UtcNow.ToString("o"),
+                Thresholds  = thresholds,
+                Monsters    = monsters,
+            };
         }
 
         public bool SaveCalibrationSamples(List<CalibrationSample> samples)

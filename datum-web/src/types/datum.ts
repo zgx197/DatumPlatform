@@ -215,3 +215,28 @@ export interface WaveMetricsItem {
   waveDifficulty: number
   monsters: MonsterInWave[]
 }
+
+export type DifficultyTier = 'easy' | 'medium' | 'hard' | 'boss'
+
+export interface DifficultyThresholds {
+  easy: number
+  medium: number
+  hard: number
+}
+
+export interface MonsterTierEntry {
+  configId: number
+  name: string
+  foeType: number
+  score: number
+  ehpScore: number
+  dpsScore: number
+  barriesId: number
+  tier: DifficultyTier
+}
+
+export interface DifficultyTiersSummary {
+  generatedAt: string
+  thresholds: DifficultyThresholds
+  monsters: MonsterTierEntry[]
+}

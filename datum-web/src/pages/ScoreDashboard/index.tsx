@@ -1,11 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Table, Tag, Space, Typography, Statistic, Row, Col, Card, Select, Input, Drawer, Descriptions, Alert, Button, message, Tooltip, Progress } from 'antd'
+import { App as AntdApp, Table, Tag, Space, Typography, Statistic, Row, Col, Card, Select, Input, Drawer, Descriptions, Alert, Button, Tooltip, Progress } from 'antd'
 import { SearchOutlined, WarningOutlined, PlusOutlined } from '@ant-design/icons'
 import ReactECharts from 'echarts-for-react'
 import { useState, useMemo } from 'react'
 import { datumApi } from '../../api/datum'
 import type { EntityScore, CalibrationSample } from '../../types/datum'
 import { FOE_TYPE_LABELS, FOE_TYPE_COLORS } from '../../types/datum'
+import WorkflowGuide from '../../components/WorkflowGuide'
 
 const { Title, Text } = Typography
 
@@ -46,11 +47,15 @@ function DifficultyBar({ ehp, dps, maxVal }: { ehp: number; dps: number; maxVal:
 }
 
 export default function ScoreDashboard() {
+  const { message } = AntdApp.useApp()
   const queryClient = useQueryClient()
   const [searchText, setSearchText] = useState('')
   const [filterType, setFilterType] = useState<number | null>(null)
   const [filterBarries, setFilterBarries] = useState<number | null>(null)
   const [selected, setSelected] = useState<EntityScore | null>(null)
+  const [showGuide, setShowGuide] = useState(() => {
+    try { return localStorage.getItem('datum-guide-dismissed') !== '1' } catch { return true }
+  })
 
   const { data: scores = [], isLoading } = useQuery<EntityScore[]>({
     queryKey: ['scores'],
@@ -145,22 +150,42 @@ export default function ScoreDashboard() {
     },
     { title: '关卡', dataIndex: 'barriesId', width: 52, sorter: (a: EntityScore, b: EntityScore) => a.barriesId - b.barriesId },
     {
-      title: '综合评分', dataIndex: 'overallScore', width: 90, defaultSortOrder: 'descend' as const,
+      title: (
+        <Tooltip title="综合评分 = 生存×EHP权重 + 输出×DPS权重 + 控制×控制权重，Boss/精英有类型系数加成。数值越高表示怪物越强。">
+          <span style={{ borderBottom: '1px dashed #555', cursor: 'help' }}>综合评分</span>
+        </Tooltip>
+      ),
+      dataIndex: 'overallScore', width: 90, defaultSortOrder: 'descend' as const,
       sorter: (a: EntityScore, b: EntityScore) => a.overallScore - b.overallScore,
       render: (v: number) => <span style={{ color: '#4e9af1', fontWeight: 600 }}>{v.toFixed(3)}</span>,
     },
     {
-      title: 'EHP', dataIndex: 'ehpScore', width: 80,
+      title: (
+        <Tooltip title="EHP（等效生命值）= HP × 防御系数 × 元素抗性修正 × 被动Buff修正，再归一化到基准值。代表怪物的有效生命力。">
+          <span style={{ borderBottom: '1px dashed #555', cursor: 'help' }}>EHP</span>
+        </Tooltip>
+      ),
+      dataIndex: 'ehpScore', width: 80,
       sorter: (a: EntityScore, b: EntityScore) => a.ehpScore - b.ehpScore,
       render: (v: number) => v.toFixed(1),
     },
     {
-      title: 'DPS', dataIndex: 'dpsScore', width: 80,
+      title: (
+        <Tooltip title="DPS（每秒伤害）= 技能DPS + DOT持续伤害，基于技能蓝图打击点计算后归一化。数据缺失时为 0（⚠ 异常）。">
+          <span style={{ borderBottom: '1px dashed #555', cursor: 'help' }}>DPS</span>
+        </Tooltip>
+      ),
+      dataIndex: 'dpsScore', width: 80,
       sorter: (a: EntityScore, b: EntityScore) => a.dpsScore - b.dpsScore,
       render: (v: number) => v.toFixed(2),
     },
     {
-      title: '难度', key: 'bar', width: 130,
+      title: (
+        <Tooltip title="蓝条=EHP占比，橙条=DPS占比，均相对于当前筛选结果中的最大值。两条长度差距过大时可能是异常。">
+          <span style={{ borderBottom: '1px dashed #555', cursor: 'help' }}>难度可视化</span>
+        </Tooltip>
+      ),
+      key: 'bar', width: 130,
       render: (_: any, row: EntityScore) => <DifficultyBar ehp={row.ehpScore} dps={row.dpsScore} maxVal={maxBar} />,
     },
   ]
@@ -171,6 +196,15 @@ export default function ScoreDashboard() {
   return (
     <Space direction="vertical" style={{ width: '100%' }} size={12}>
       <Title level={4} style={{ margin: 0 }}>全量评估</Title>
+
+      {showGuide && (
+        <WorkflowGuide
+          onClose={() => {
+            setShowGuide(false)
+            try { localStorage.setItem('datum-guide-dismissed', '1') } catch {}
+          }}
+        />
+      )}
 
       <Row gutter={12}>
         <Col span={5}><Card size="small"><Statistic title="怪物总数" value={`${filtered.length} / ${scores.length}`} valueStyle={{ fontSize: 18 }} /></Card></Col>

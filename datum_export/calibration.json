@@ -2,7 +2,7 @@
   {
     "configId": 100603,
     "name": "\u8718\u86DB1",
-    "subjectiveScore": 3,
+    "subjectiveScore": 1.3,
     "ehpNorm": 1.0245901,
     "dpsNorm": 0.61580247,
     "controlNorm": 0.00040001603
@@ -10,7 +10,7 @@
   {
     "configId": 100803,
     "name": "\u8718\u86DB",
-    "subjectiveScore": 5,
+    "subjectiveScore": 1.4,
     "ehpNorm": 1.2941177,
     "dpsNorm": 0.7804938,
     "controlNorm": 0.00040001603
@@ -18,7 +18,7 @@
   {
     "configId": 103101,
     "name": "\u9AB7\u9AC51",
-    "subjectiveScore": 7,
+    "subjectiveScore": 1,
     "ehpNorm": 0.022132797,
     "dpsNorm": 0.2820513,
     "controlNorm": 0.00040001603
@@ -26,7 +26,7 @@
   {
     "configId": 100704,
     "name": "\u9AB7\u9AC5\u738B",
-    "subjectiveScore": 8,
+    "subjectiveScore": 6.5,
     "ehpNorm": 18.78453,
     "dpsNorm": 1.2538888,
     "controlNorm": 0.00056
@@ -34,7 +34,7 @@
   {
     "configId": 651104,
     "name": "\u9AB7\u9AC5\u738B",
-    "subjectiveScore": 5,
+    "subjectiveScore": 1.3,
     "ehpNorm": 0.42835668,
     "dpsNorm": 0.26444444,
     "controlNorm": 0.00056
@@ -42,7 +42,7 @@
   {
     "configId": 101004,
     "name": "\u9AB7\u9AC5\u738B",
-    "subjectiveScore": 5,
+    "subjectiveScore": 8.3,
     "ehpNorm": 29.001146,
     "dpsNorm": 1.6690277,
     "controlNorm": 0.00056
@@ -50,7 +50,7 @@
   {
     "configId": 102705,
     "name": "\u9AB7\u9AC5\u6218\u5C06",
-    "subjectiveScore": 5,
+    "subjectiveScore": 1.1,
     "ehpNorm": 0.15151516,
     "dpsNorm": 0.23076925,
     "controlNorm": 0.00056
@@ -58,7 +58,7 @@
   {
     "configId": 100707,
     "name": "\u5438\u8840\u9B3C\u738B",
-    "subjectiveScore": 5,
+    "subjectiveScore": 2.2,
     "ehpNorm": 11.752137,
     "dpsNorm": 0.7722222,
     "controlNorm": 0.00056
@@ -66,7 +66,7 @@
   {
     "configId": 100706,
     "name": "\u5438\u8840\u9B3C\u7CBE\u82F1",
-    "subjectiveScore": 5,
+    "subjectiveScore": 1.9,
     "ehpNorm": 6.329114,
     "dpsNorm": 0.7822222,
     "controlNorm": 0.00056
@@ -74,7 +74,7 @@
   {
     "configId": 201105,
     "name": "\u538B\u8FEB\u8005\u7B49\u7EA71",
-    "subjectiveScore": 5,
+    "subjectiveScore": 1.4,
     "ehpNorm": 0.0025,
     "dpsNorm": 0.0053333333,
     "controlNorm": 0
@@ -82,7 +82,7 @@
   {
     "configId": 200705,
     "name": "\u538B\u8FEB\u8005\u7B49\u7EA71",
-    "subjectiveScore": 5,
+    "subjectiveScore": 1.4,
     "ehpNorm": 0.0025,
     "dpsNorm": 0.0053333333,
     "controlNorm": 0
@@ -90,7 +90,7 @@
   {
     "configId": 201106,
     "name": "\u538B\u8FEB\u8005\u7B49\u7EA71",
-    "subjectiveScore": 5,
+    "subjectiveScore": 1.4,
     "ehpNorm": 0.0025,
     "dpsNorm": 0.0053333333,
     "controlNorm": 0
@@ -98,7 +98,7 @@
   {
     "configId": 100801,
     "name": "\u5F3A\u76D7",
-    "subjectiveScore": 5,
+    "subjectiveScore": 1.6,
     "ehpNorm": 0.051434424,
     "dpsNorm": 0.43666667,
     "controlNorm": 1.6E-08
@@ -106,7 +106,7 @@
   {
     "configId": 100602,
     "name": "\u5438\u8840\u9B3C1",
-    "subjectiveScore": 5,
+    "subjectiveScore": 1.1,
     "ehpNorm": 0.21450458,
     "dpsNorm": 0.29523808,
     "controlNorm": 0.00040001603
@@ -114,7 +114,7 @@
   {
     "configId": 101003,
     "name": "\u8718\u86DB",
-    "subjectiveScore": 5,
+    "subjectiveScore": 1.5,
     "ehpNorm": 1.575597,
     "dpsNorm": 0.94518524,
     "controlNorm": 0.00040001603
@@ -122,7 +122,7 @@
   {
     "configId": 102704,
     "name": "\u9AB7\u9AC5\u738B",
-    "subjectiveScore": 5,
+    "subjectiveScore": 1.4,
     "ehpNorm": 0.4610656,
     "dpsNorm": 0.41333333,
     "controlNorm": 0.00056
@@ -130,7 +130,7 @@
   {
     "configId": 100404,
     "name": "\u9AB7\u9AC5\u738B",
-    "subjectiveScore": 5,
+    "subjectiveScore": 4.5,
     "ehpNorm": 10.615711,
     "dpsNorm": 0.7201389,
     "controlNorm": 0.00056
@@ -138,7 +138,7 @@
   {
     "configId": 100804,
     "name": "\u9AB7\u9AC5\u738B",
-    "subjectiveScore": 5,
+    "subjectiveScore": 7.2,
     "ehpNorm": 23.351955,
     "dpsNorm": 1.3788542,
     "controlNorm": 0.00056
@@ -146,7 +146,7 @@
   {
     "configId": 100906,
     "name": "\u718A\u7CBE\u82F1",
-    "subjectiveScore": 5,
+    "subjectiveScore": 2.8,
     "ehpNorm": 8.096799,
     "dpsNorm": 0.6652252,
     "controlNorm": 0.00056
@@ -154,7 +154,7 @@
   {
     "configId": 103107,
     "name": "\u5438\u8840\u9B3C\u738B",
-    "subjectiveScore": 5,
+    "subjectiveScore": 1.7,
     "ehpNorm": 3.1746032,
     "dpsNorm": 0.6666667,
     "controlNorm": 0.00056
@@ -162,7 +162,7 @@
   {
     "configId": 102707,
     "name": "\u5438\u8840\u9B3C\u738B",
-    "subjectiveScore": 5,
+    "subjectiveScore": 1.1,
     "ehpNorm": 0.25183675,
     "dpsNorm": 0.23703705,
     "controlNorm": 0.00056
@@ -170,7 +170,7 @@
   {
     "configId": 202703,
     "name": "\u538B\u8FEB\u8005\u7B49\u7EA71",
-    "subjectiveScore": 5,
+    "subjectiveScore": 1.4,
     "ehpNorm": 0.0025,
     "dpsNorm": 0.0053333333,
     "controlNorm": 0
@@ -178,7 +178,7 @@
   {
     "configId": 201004,
     "name": "\u538B\u8FEB\u8005\u7B49\u7EA71",
-    "subjectiveScore": 5,
+    "subjectiveScore": 1.4,
     "ehpNorm": 0.0025,
     "dpsNorm": 0.0053333333,
     "controlNorm": 0
@@ -186,7 +186,7 @@
   {
     "configId": 200504,
     "name": "\u538B\u8FEB\u8005\u7B49\u7EA71",
-    "subjectiveScore": 5,
+    "subjectiveScore": 1.4,
     "ehpNorm": 0.0025,
     "dpsNorm": 0.0053333333,
     "controlNorm": 0
@@ -194,7 +194,7 @@
   {
     "configId": 101005,
     "name": "\u72FC\u7CBE\u82F1",
-    "subjectiveScore": 5,
+    "subjectiveScore": 9,
     "ehpNorm": 4.410544,
     "dpsNorm": 0.3026316,
     "controlNorm": 0
