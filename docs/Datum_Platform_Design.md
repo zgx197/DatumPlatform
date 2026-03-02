@@ -1,9 +1,9 @@
 # Datum Platform — 跨项目数值分析平台设计文档
 
-> **文档版本**：v3.0  
+> **文档版本**：v3.1  
 > **创建时间**：2026-03-02  
 > **最后更新**：2026-03-02  
-> **状态**：**Phase 3 + 元素/Buff 维度集成完成** — 后端 API + 4 个前端页面 + BuffEvaluator + DPS/控制分解可视化  
+> **状态**：**Phase 3 + 元素/Buff + 关卡维度完成** — 后端 API + 5 个前端页面 + BuffEvaluator + LevelAggregator + 调试面板  
 > **文档位置**：`D:\work\DatumPlatform\docs\`  
 > **前置文档**：`Datum_Design.md`（Unity 侧 `Documentations~/`，核心评估框架历史设计）
 
@@ -457,10 +457,11 @@ public interface IMlAdvisor
 | **Phase 3.4** | 前后端联通 | 启动 DatumServer + datum-web；验证全部 API 可返回数据；TypeScript 0 错误 | ✅ 已完成 |
 | **Phase 3.5** | 前端功能增强 | ScoreDashboard（难度条+详情+异常+关卡筛选+添加到校准）；WeightCalibration（样本编辑+保存）；TemplateAnalysis（列表+柱状图+曲线+一致性）；HealthReport（健康度+对比+展开） | ✅ 已完成 |
 | **Phase 3.6** | Unity 侧清理 | 删除 Windows/Calibrator/Template/DatumContext 等旧代码；仅保留 Export；更新 README 和设计文档 | ✅ 已完成 |
+| **Phase 6a** | 元素/Buff 维度集成 | BuffEvaluator + 元素抗性修正 + DPS/控制分解 + 前端可视化增强 | ✅ 已完成 |
+| **Phase 6b** | 关卡维度聚合 | LevelAggregator（波次聚合 + 难度曲线 + 加速曲线）；LevelView 前端页面；`level_structure.json` 导出 | ✅ 已完成 |
+| **Phase 6c** | 调试体验 + Bug 修复 | DebugPanel（全局错误捕获 + AI 友好导出）；calibration.json 字段兼容；wave duplicate key 修复；antd 静态 API 修复 | ✅ 已完成 |
 | **Phase 4** | Git Hook 自动化 | `post-commit` 触发 Unity 导出；CI 集成 | 🔲 待实施 |
 | **Phase 5** | 打包与分发 | `build.ps1` 一键构建；`datum-server.exe` 单文件验证；策划端测试 | 🔲 待实施 |
-| **Phase 6a** | 元素/Buff 维度集成 | BuffEvaluator + 元素抗性修正 + DPS/控制分解 + 前端可视化增强 | ✅ 已完成 |
-| **Phase 6b** | 关卡维度 + 蒙特卡洛仿真 | 关卡聚合升级 + Slow Evaluator（详见第 12 节） | 🔲 远期 |
 | **Phase 7** | 跨项目适配 | 第二个项目接入验证；`--data` 参数切换 | 🔲 远期 |
 | **Phase 8** | ML 接入 | `IMlAdvisor` 实现（ML.NET 或 Python 微服务）| 🔲 远期 |
 
@@ -577,24 +578,15 @@ datum-web/src/
 
 已在 Phase 6a 实现：`BuffEvaluator` 模块（DOT DPS + 控制时长 + 被动 EHP 修正），新增 `buff_configs.json` 导出。详见 `Datum_Design.md` 第 11 节。
 
-### 12.3 方向 C：关卡维度聚合升级
+### ~~12.3 方向 C：关卡维度聚合升级~~ ✅ 已完成
 
-**现状**：ScoreDashboard 支持按 `barries_id` 筛选关卡，但仅展示单体评分列表，没有关卡级别的聚合分析。
+已在 Phase 6b 实现：
 
-**实现思路**：
-- **波次结构解析**：从 `MazeTriggerBrushFoeV8` 读取波次配置（触发器 → 波次 → 怪物列表 + 间隔时间）
-- **同时在场难度**：同一波次的怪物评分叠加 vs 全关卡累加
-- **关卡难度曲线**：时间线视图，随时间推移的难度变化
-- **关卡强度热力图**：横轴关卡 ID，纵轴评分分位数（P25/P50/P75/P95）
-- 新增前端页面 `LevelView`（已在架构中预留）
-
-**导出扩展**：新增 `level_structure.json`，包含波次结构、触发条件、怪物配置 ID 列表。
-
-**难点**：刷怪系统的波次逻辑比较复杂（区域触发 + 间隔时间 + 加权随机采样）。
-
-**收益**：中高。让策划看到"关卡的哪个阶段最难"，而不是只看一个聚合数字。
-
-**工作量**：3-4 天。
+- `DatumCore/LevelAggregator/` — `LevelAggregator`（波次聚合 + 难度曲线 + 加速曲线 + 元素分布）
+- `LevelsController.cs` — `GET /api/levels/structures`、`GET /api/levels/metrics`、`GET /api/levels/metrics/{id}`
+- `LevelView` 前端页面 — 关卡列表 + 难度曲线（理论/加速双曲线）+ 波次详情表格 + 元素/类型分布饼图
+- `level_structure.json` — Unity 侧导出波次结构（触发器 → 波次 → 怪物列表）
+- **已修复**：同一 `triggerId` 多配置行导致的波次三元组重复，`LevelAggregator` 按 `(regionId, triggerId, waveIndex)` 合并
 
 ### 12.4 方向 D：蒙特卡洛仿真（Slow Evaluator）
 
@@ -634,7 +626,7 @@ Slow Evaluator（蒙特卡洛仿真）
 | 优先级 | 方向 | 工作量 | 状态 |
 |---|---|---|---|
 | ~~**P1**~~ | ~~A：元素维度~~ | ~~1-2天~~ | ✅ 已完成 |
-| **P1** | C：关卡维度 | 3-4天 | 🔲 待实施 |
+| ~~**P1**~~ | ~~C：关卡维度~~ | ~~3-4天~~ | ✅ 已完成 |
 | ~~**P2**~~ | ~~B：Buff 维度~~ | ~~4-5天~~ | ✅ 已完成 |
 | **P3** | D：蒙特卡洛仿真 | 1周+ | 🔲 远期目标 |
 
@@ -668,4 +660,4 @@ Snapshot → Resolver → Metrics(EHP/DPS/Control) → SkillEval → Aggregator 
 ---
 
 *最后更新：2026-03-02*  
-*版本：v3.0 — Phase 3 + 元素/Buff 维度集成完成（BuffEvaluator + DPS/控制分解 + 前端可视化增强）*
+*版本：v3.1 — Phase 6b/6c 完成（LevelAggregator + LevelView + DebugPanel + 校准样本字段兼容 + 多处 duplicate key 修复）*

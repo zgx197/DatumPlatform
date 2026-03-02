@@ -1,6 +1,6 @@
 # DatumPlatform
 
-**游戏数值评估平台** — 基于 Unity 导出数据的 Web + 后端数值分析系统，提供怪物评分、权重校准、模板评估、健康报告等功能，支持数值平衡迭代与关卡难度曲线分析。
+**游戏数值评估平台** — 基于 Unity 导出数据的 Web + 后端数值分析系统，提供怪物评分、权重校准、模板评估、健康报告、关卡难度曲线分析等功能，支持数值平衡迭代。
 
 ## 架构概览
 
@@ -25,7 +25,8 @@ DatumPlatform/
 │       ├── SkillEvaluator/     技能评估
 │       ├── BuffEvaluator/      Buff 评估（DOT DPS + 控制时长 + 被动EHP修正）
 │       ├── Snapshot/           数据快照
-│       └── Template/           模板发现与评估
+│       ├── Template/           模板发现与评估
+│       └── LevelAggregator/    关卡聚合（难度曲线、弹性分析、元素分布）
 └── datum_export/               Unity 导出的 JSON 数据（由 Unity 项目生成）
 ```
 
@@ -64,6 +65,16 @@ DatumPlatform/
 - **一致性问题展开**：Collapse 逐模板展开，显示具体偏差描述
 - **跨模板对比表格**：基准分/最高分/缩放率/变种数/一致性状态
 
+### 关卡分析（LevelView）
+- **总览柱状图**：各关卡总难度 + 峰值难度 + 怪物数折线对比
+- **关卡卡片**：总难度/怪物数/波次数/峰值难度一览
+- **难度曲线**：理论曲线（实线）vs 加速曲线（虚线）双 Y 轴（难度 + 存活数）
+- **怪物类型分布**：Boss / 精英 / 普通 饼图
+- **元素分布**：从技能蓝图 `DamageElement` 提取的真实元素统计饼图
+- **波次详情表格**：每波触发器、延迟、怪物数、波次难度、怪物构成
+- **指标卡片**：总难度、峰值难度、平均密度、持续时间、**难度弹性**（加速/理论峰值比）
+- **存活时间滑块**：5~120s 动态调整，实时联动后端重算
+
 ## 快速开始
 
 ### 1. 数据准备
@@ -74,14 +85,37 @@ DatumPlatform/
 # 点击「导出全部 JSON」
 ```
 
-### 2. 启动后端
+### 2. 一键启动（推荐）
+
+```powershell
+# 在 DatumPlatform 根目录执行：
+.\dev.ps1
+
+# 指定数据目录：
+.\dev.ps1 -Data "D:\work\DatumPlatform\datum_export"
+
+# 跳过编译（代码未修改时，启动更快）：
+.\dev.ps1 -SkipBuild
+
+# 仅启动后端（用于调试 API）：
+.\dev.ps1 -BackendOnly
+
+# 仅启动前端（后端已单独运行）：
+.\dev.ps1 -FrontendOnly
+```
+
+`dev.ps1` 会自动：编译后端 → 启动后端服务（端口 7000）→ 启动前端开发服务器（端口 5173）→ 打开浏览器到关卡分析页面。
+
+### 2b. 手动启动（备选）
+
+**后端：**
 ```bash
 cd d:\work\DatumPlatform\DatumServer
 dotnet run -- --data "d:\work\DatumPlatform\datum_export"
 # 访问：http://localhost:7000
 ```
 
-### 3. 启动前端
+**前端：**
 ```bash
 cd d:\work\DatumPlatform\datum-web
 npm install
@@ -124,6 +158,7 @@ datum-web（React 前端）
 - **calibration.json**：校准样本（`CalibrationSample`）
 - **templates.json**：模板注册表（`MonsterTemplate`）
 - **monster_scores.json**：预计算评分（`EntityScore`）
+- **level_structure.json**：关卡结构（`LevelStructure`，含触发器、波次、时间轴、预设怪物）
 
 ### 字段名约定
 - Unity 导出与后端反序列化采用 **snake_case**（如 `survival_weight`）

@@ -1,16 +1,28 @@
 using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 using Datum.Core.Aggregator;
 
 namespace Datum.Core.Calibrator
 {
     public class CalibrationSample
     {
+        [JsonPropertyName("configId")]
         public int ConfigId { get; set; }
+
+        [JsonPropertyName("name")]
         public string Name { get; set; }
+
+        [JsonPropertyName("subjectiveScore")]
         public float SubjectiveScore { get; set; }   // 策划主观评分 1-10
+
+        [JsonPropertyName("ehpNorm")]
         public float EHPNorm { get; set; }
+
+        [JsonPropertyName("dpsNorm")]
         public float DPSNorm { get; set; }
+
+        [JsonPropertyName("controlNorm")]
         public float ControlNorm { get; set; }
     }
 

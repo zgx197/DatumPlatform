@@ -6,6 +6,8 @@ import type {
   DatumFoeRow,
   HealthInfo,
   CalibrationSample,
+  LevelStructure,
+  LevelMetrics,
 } from '../types/datum'
 
 export const datumApi = {
@@ -41,4 +43,13 @@ export const datumApi = {
     scaleFactor: number; rSquared: number; mse: number; interpretation: string
   }> =>
     api.post('/calibration/run').then(r => r.data),
+
+  levelStructures: (): Promise<LevelStructure[]> =>
+    api.get('/levels/structures').then(r => r.data),
+
+  levelMetrics: (lifetime?: number): Promise<LevelMetrics[]> =>
+    api.get('/levels/metrics', { params: lifetime != null ? { lifetime } : undefined }).then(r => r.data),
+
+  levelMetricsById: (levelId: number, lifetime?: number): Promise<LevelMetrics> =>
+    api.get(`/levels/metrics/${levelId}`, { params: lifetime != null ? { lifetime } : undefined }).then(r => r.data),
 }

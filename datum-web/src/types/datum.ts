@@ -135,3 +135,83 @@ export const ELEMENT_COLORS: Record<number, string> = {
   3: '#a855f7',
   4: '#facc15',
 }
+
+// ─── 关卡结构 ──────────────────────────────────────
+
+export interface LevelStructure {
+  levelId: number
+  levelName: string
+  exportTime: string
+  frameRate: number
+  triggers: TriggerData[]
+  presetMonsters: PresetMonsterData[]
+}
+
+export interface TriggerData {
+  triggerId: number
+  regionId: number
+  barriesId: number
+  position: { x: number; y: number; z: number }
+  behaviorType: number
+  healthCoefficient: number
+  waves: WaveData[]
+  timeline: TimelineFrame[]
+}
+
+export interface WaveData {
+  waveIndex: number
+  delayMs: number
+  monsters: MonsterInWave[]
+}
+
+export interface MonsterInWave {
+  configId: number
+  count: number
+}
+
+export interface TimelineFrame {
+  frame: number
+  monsterIds: string[]
+}
+
+export interface PresetMonsterData {
+  triggerId: number
+  monsterIds: string[]
+  positions: { x: number; y: number; z: number }[]
+  rotations: { x: number; y: number; z: number }[]
+}
+
+// ─── 关卡指标 ──────────────────────────────────────
+
+export interface LevelMetrics {
+  levelId: number
+  levelName: string
+  totalMonsterCount: number
+  waveCount: number
+  totalDifficulty: number
+  peakSimultaneousDifficulty: number
+  averageDifficultyDensity: number
+  durationSeconds: number
+  difficultyCurve: DifficultyPoint[]
+  acceleratedCurve: DifficultyPoint[]
+  difficultyElasticity: number
+  monsterTypeDistribution: Record<string, number>
+  elementDistribution: Record<string, number>
+  waveDetails: WaveMetricsItem[]
+}
+
+export interface DifficultyPoint {
+  timeSeconds: number
+  difficulty: number
+  aliveCount: number
+}
+
+export interface WaveMetricsItem {
+  triggerId: number
+  regionId: number
+  waveIndex: number
+  delaySeconds: number
+  monsterCount: number
+  waveDifficulty: number
+  monsters: MonsterInWave[]
+}

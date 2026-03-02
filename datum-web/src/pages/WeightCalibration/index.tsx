@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Card, Slider, Button, Typography, Space, Row, Col, Statistic, message, Table, Tag, Alert, Divider, Progress, InputNumber, Popconfirm } from 'antd'
+import { App as AntdApp, Card, Slider, Button, Typography, Space, Row, Col, Statistic, Table, Tag, Alert, Divider, Progress, InputNumber, Popconfirm } from 'antd'
 import { ThunderboltOutlined, SaveOutlined, DeleteOutlined } from '@ant-design/icons'
 import { useState, useEffect, useMemo } from 'react'
 import ReactECharts from 'echarts-for-react'
@@ -19,6 +19,7 @@ function WeightSlider({ label, value, onChange }: { label: string; value: number
 }
 
 export default function WeightCalibration() {
+  const { message } = AntdApp.useApp()
   const queryClient = useQueryClient()
   const { data: weights } = useQuery<WeightConfig>({
     queryKey: ['weights'],
@@ -27,6 +28,7 @@ export default function WeightCalibration() {
 
   const [local, setLocal] = useState<WeightConfig | null>(null)
   const [previewScores, setPreviewScores] = useState<EntityScore[] | null>(null)
+  const [samplesForCalib, setSamplesForCalib] = useState<import('../../types/datum').CalibrationSample[]>([])
 
   useEffect(() => { if (weights && !local) setLocal({ ...weights }) }, [weights])
 
@@ -43,6 +45,7 @@ export default function WeightCalibration() {
   const recalcMutation = useMutation({
     mutationFn: (w: WeightConfig) => datumApi.recalcScores(w),
     onSuccess: (data) => setPreviewScores(data),
+    onError: (err: any) => message.error(`预览重算失败：${err?.response?.data?.message ?? err?.message ?? '未知错误'}`),
   })
 
   const totalWeight = local ? parseFloat((local.survival_weight + local.damage_weight + local.control_weight).toFixed(3)) : 0
@@ -155,15 +158,19 @@ export default function WeightCalibration() {
       )}
 
       <Divider style={{ margin: '4px 0' }}>校准样本管理</Divider>
-      <SamplesPanel />
+      <SamplesPanel onSamplesChange={setSamplesForCalib} />
 
       <Divider style={{ margin: '4px 0' }}>最小二乘权重校准</Divider>
-      <CalibrationPanel onApply={(w) => { setLocal({ ...local!, ...w }); setPreviewScores(null) }} />
+      <CalibrationPanel
+        localSampleCount={samplesForCalib.length}
+        onApply={(w) => { setLocal({ ...local!, ...w }); setPreviewScores(null) }}
+      />
     </Space>
   )
 }
 
-function CalibrationPanel({ onApply }: { onApply: (w: Partial<WeightConfig>) => void }) {
+function CalibrationPanel({ onApply, localSampleCount }: { onApply: (w: Partial<WeightConfig>) => void; localSampleCount: number }) {
+  const { message } = AntdApp.useApp()
   const [calibResult, setCalibResult] = useState<{
     survival_weight: number; damage_weight: number; control_weight: number
     scaleFactor: number; rSquared: number; mse: number; interpretation: string
@@ -174,10 +181,12 @@ function CalibrationPanel({ onApply }: { onApply: (w: Partial<WeightConfig>) => 
     queryFn: () => datumApi.calibrationSamples(),
   })
 
+  const sampleCount = localSampleCount > 0 ? localSampleCount : samples.length
+
   const calibMutation = useMutation({
     mutationFn: () => datumApi.runCalibration(),
     onSuccess: (data) => setCalibResult(data),
-    onError: () => message.error('校准失败，样本数量不足（至少需要 3 条）'),
+    onError: () => message.error('校准失败，样本数据不足或矩阵奇异，请先保存样本'),
   })
 
   const scatterOpt = useMemo(() => {
@@ -211,13 +220,13 @@ function CalibrationPanel({ onApply }: { onApply: (w: Partial<WeightConfig>) => 
           icon={<ThunderboltOutlined />}
           loading={calibMutation.isPending}
           onClick={() => calibMutation.mutate()}
-          disabled={samples.length < 3}
+          disabled={sampleCount < 3}
         >
-          一键校准（{samples.length} 条样本）
+          一键校准（{sampleCount} 条样本）
         </Button>
       }
     >
-      {samples.length < 3 && (
+      {sampleCount < 3 && (
         <Alert type="info" showIcon
           message="需要至少 3 条校准样本才能运行自动校准"
           description="请在 calibration.json 中添加主观评分样本"
@@ -281,7 +290,8 @@ function CalibrationPanel({ onApply }: { onApply: (w: Partial<WeightConfig>) => 
   )
 }
 
-function SamplesPanel() {
+function SamplesPanel({ onSamplesChange }: { onSamplesChange: (samples: CalibrationSample[]) => void }) {
+  const { message } = AntdApp.useApp()
   const queryClient = useQueryClient()
   const { data: rawSamples = [] } = useQuery<CalibrationSample[]>({
     queryKey: ['calibration-samples'],
@@ -292,8 +302,16 @@ function SamplesPanel() {
   const [dirty, setDirty] = useState(false)
 
   useEffect(() => {
-    setLocalSamples(rawSamples.map(s => ({ ...s })))
+    // 加载时按 configId 去重，防止重复添加导致 duplicate key
+    const seen = new Set<number>()
+    const deduped = rawSamples.filter(s => {
+      if (seen.has(s.configId)) return false
+      seen.add(s.configId)
+      return true
+    })
+    setLocalSamples(deduped.map(s => ({ ...s })))
     setDirty(false)
+    onSamplesChange(deduped)
   }, [rawSamples])
 
   const saveMutation = useMutation({
@@ -305,6 +323,11 @@ function SamplesPanel() {
     },
     onError: () => message.error('保存失败'),
   })
+
+  // 当 localSamples 变化时通知父组件（用 useEffect 避免在 state updater 内部 setState）
+  useEffect(() => {
+    onSamplesChange(localSamples)
+  }, [localSamples])
 
   const updateScore = (configId: number, score: number) => {
     setLocalSamples(prev => prev.map(s => s.configId === configId ? { ...s, subjectiveScore: score } : s))

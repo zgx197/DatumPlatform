@@ -1,4 +1,4 @@
-import { Layout, Menu, notification } from 'antd'
+import { App as AntdApp, Button, Layout, Menu, Tooltip } from 'antd'
 import { useState, useEffect } from 'react'
 import { BrowserRouter, useNavigate, useLocation } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
@@ -13,7 +13,10 @@ import {
 import * as signalR from '@microsoft/signalr'
 import AppRoutes from './routes/AppRoutes'
 import UpdateBanner from './components/UpdateBanner'
+import DebugPanel, { installGlobalHandlers } from './components/DebugPanel'
 import './App.css'
+
+installGlobalHandlers()
 
 const { Sider, Content, Header } = Layout
 
@@ -31,6 +34,7 @@ function AppLayout() {
   const location = useLocation()
   const queryClient = useQueryClient()
   const [collapsed, setCollapsed] = useState(false)
+  const { notification: antNotification } = AntdApp.useApp()
 
   // SignalR 实时数据更新：文件变更后自动刷新所有查询
   useEffect(() => {
@@ -44,7 +48,9 @@ function AppLayout() {
       queryClient.invalidateQueries({ queryKey: ['templates'] })
       queryClient.invalidateQueries({ queryKey: ['health'] })
       queryClient.invalidateQueries({ queryKey: ['weights'] })
-      notification.info({
+      queryClient.invalidateQueries({ queryKey: ['levelMetrics'] })
+      queryClient.invalidateQueries({ queryKey: ['levelStructures'] })
+      antNotification.info({
         message: '数据已自动更新',
         description: 'datum_export/ 文件变更，评分已重新计算。',
         duration: 4,
@@ -92,6 +98,27 @@ function AppLayout() {
             onClick: () => navigate(item.key),
           }))}
         />
+        <div style={{
+          position: 'absolute',
+          bottom: 48,
+          left: 0,
+          right: 0,
+          padding: collapsed ? '0 8px' : '0 4px',
+          borderTop: '1px solid #21262d',
+          paddingTop: 8,
+        }}>
+          {collapsed ? (
+            <Tooltip title="调试信息" placement="right">
+              <Button
+                type="text"
+                icon={<BugOutlined />}
+                style={{ color: '#8b949e', width: '100%' }}
+              />
+            </Tooltip>
+          ) : (
+            <DebugPanel />
+          )}
+        </div>
       </Sider>
 
       <Layout style={{ background: '#0d1117' }}>
@@ -116,7 +143,9 @@ function AppLayout() {
 export default function App() {
   return (
     <BrowserRouter>
-      <AppLayout />
+      <AntdApp>
+        <AppLayout />
+      </AntdApp>
     </BrowserRouter>
   )
 }

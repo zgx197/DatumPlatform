@@ -1,5 +1,6 @@
 using System.Reflection;
 using Datum.Core.Aggregator;
+using Datum.Core.LevelAggregator;
 using Datum.Core.Provider;
 using Datum.Core.Calibrator;
 using Datum.Core.Template;
@@ -19,6 +20,7 @@ namespace Datum.Server.Services
         private List<EntityScore> _cachedScores = new();
         private MonsterTemplateRegistry _registry = new();
         private List<CalibrationSample> _calibrationSamples = new();
+        private List<LevelStructure> _levelStructures = new();
         private string _dataDir = string.Empty;
 
         public string DataDir => _dataDir;
@@ -61,21 +63,39 @@ namespace Datum.Server.Services
                 catch { /* 解析失败则使用默认权重 */ }
             }
 
-            // 加载校准样本
+            // 加载校准样本（兼容 Unity 导出的 snake_case 字段名）
             var calibPath = Path.Combine(dir, "calibration.json");
             if (File.Exists(calibPath))
             {
                 try
                 {
-                    var json = File.ReadAllText(calibPath);
+                    var json = File.ReadAllText(calibPath)
+                        .Replace("\"config_id\"",        "\"configId\"")
+                        .Replace("\"subjective_score\"", "\"subjectiveScore\"")
+                        .Replace("\"ehp_norm\"",         "\"ehpNorm\"")
+                        .Replace("\"dps_norm\"",         "\"dpsNorm\"")
+                        .Replace("\"control_norm\"",     "\"controlNorm\"");
                     _calibrationSamples = System.Text.Json.JsonSerializer.Deserialize<List<CalibrationSample>>(json, _jsonOpts)
                         ?? new List<CalibrationSample>();
                 }
                 catch { }
             }
 
+            // 加载关卡结构
+            var levelPath = Path.Combine(dir, "level_structure.json");
+            if (File.Exists(levelPath))
+            {
+                try
+                {
+                    var json = File.ReadAllText(levelPath);
+                    _levelStructures = System.Text.Json.JsonSerializer.Deserialize<List<LevelStructure>>(json, _jsonOpts)
+                        ?? new List<LevelStructure>();
+                }
+                catch { _levelStructures = new List<LevelStructure>(); }
+            }
+
             RecalculateScores();
-            Console.WriteLine($"[DatumDataService] 加载完成：{_provider.GetAllFoeRows().Count} 个怪物");
+            Console.WriteLine($"[DatumDataService] 加载完成：{_provider.GetAllFoeRows().Count} 个怪物，{_levelStructures.Count} 个关卡");
         }
 
         public void RecalculateScores()
@@ -97,6 +117,20 @@ namespace Datum.Server.Services
         public EvaluationWeightConfig GetWeightConfig() => _weightConfig;
         public MonsterTemplateRegistry GetRegistry() => _registry;
         public IReadOnlyList<CalibrationSample> GetCalibrationSamples() => _calibrationSamples;
+        public IReadOnlyList<LevelStructure> GetLevelStructures() => _levelStructures;
+
+        public List<LevelMetrics> GetLevelMetrics(float? lifetimeOverride = null)
+        {
+            if (_levelStructures.Count == 0) return new List<LevelMetrics>();
+
+            var foeTypes = (_provider?.GetAllFoeRows() ?? new List<DatumFoeRow>())
+                .Select(r => (r.ConfigId, r.FoeType))
+                .ToList();
+
+            float lifetime = lifetimeOverride ?? Core.LevelAggregator.LevelAggregator.DefaultMonsterLifetimeSec;
+            return Core.LevelAggregator.LevelAggregator.CalculateAll(
+                _levelStructures, _cachedScores, foeTypes, lifetime, _provider);
+        }
 
         public List<EntityScore> RecalculateWithWeights(EvaluationWeightConfig weights)
         {
