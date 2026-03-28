@@ -1,222 +1,307 @@
-# <img src="datum-web/public/favicon.svg" width="28" height="28" alt="D" /> DatumPlatform
+<div align="center">
 
-**游戏数值评估平台** — 基于 Unity 导出数据的 Web + 后端数值分析系统，提供怪物评分、权重校准、模板评估、健康报告、关卡难度曲线分析、AI 智能助手等功能，支持数值平衡迭代。
+<img src="datum-web/public/favicon.svg" width="72" height="72" alt="DatumPlatform" />
 
-## 架构概览
+<h1>DatumPlatform</h1>
 
-```
-DatumPlatform/
-├── datum-web/                 React + Ant Design + ECharts（前端）
-│   ├── src/pages/
-│   │   ├── ScoreDashboard/       全量评估（难度条、详情面板、异常提示）
-│   │   ├── WeightCalibration/    权重校准（滑块、样本管理、最小二乘法）
-│   │   ├── TemplateAnalysis/     模板发现 & 评估（列表、柱状图、缩放曲线）
-│   │   ├── HealthReport/         健康报告（健康度、问题展开、对比）
-│   │   ├── LevelView/            关卡分析（难度曲线、波次、元素分布）
-│   │   ├── FormulaDoc/           系统文档（KaTeX + Mermaid）
-│   │   └── Settings/             设置（AI 模型、快捷键、Prompt 规则、显示偏好）
-│   ├── src/components/
-│   │   ├── AiChatDrawer.tsx      AI 助手侧边抽屉（LaTeX / Mermaid / 字体大小）
-│   │   ├── MermaidBlock.tsx      Mermaid 流程图组件（共享）
-│   │   └── DebugPanel.tsx        调试面板（全局错误捕获）
-│   ├── src/services/
-│   │   ├── aiChat.ts             AI 聊天（流式 + Function Calling）
-│   │   ├── aiConfig.ts           AI 模型管理
-│   │   ├── promptRules.ts        Prompt 规则系统（8 条内置 + 自定义）
-│   │   ├── uiPrefs.ts            全局 UI 偏好（字体大小等）
-│   │   └── shortcuts.ts          快捷键系统
-│   └── src/api/                  REST API 客户端
-├── DatumServer/                  ASP.NET Core（后端）
-│   ├── Controllers/              REST API 接口
-│   ├── Services/                 数据加载、校准、文件监听
-│   └── app.ico                   应用程序图标
-├── DatumCore/                    计算核心（与 Unity 共享，无 Unity 依赖）
-│   ├── Aggregator/               综合评分层（加权聚合、Power Mean）
-│   ├── Calibrator/               权重校准器（最小二乘法求解）
-│   ├── Metrics/                  战斗指标（EHP/DPS/控制 + 分解字段）
-│   ├── Provider/                 数据提供者（JsonFoeDataProvider）
-│   ├── Resolver/                 属性折算（含元素抗性）
-│   ├── SkillEvaluator/           技能评估
-│   ├── BuffEvaluator/            Buff 评估（DOT DPS + 控制时长 + 被动EHP修正）
-│   ├── Snapshot/                 数据快照
-│   ├── Template/                 模板发现与评估
-│   └── LevelAggregator/         关卡聚合（难度曲线、弹性分析、元素分布）
-├── datum_export/                 Unity 导出的 JSON 数据
-├── dev.ps1                       开发启动脚本（自动清理旧进程）
-└── build.ps1                     生产构建脚本（单文件 exe）
-```
+**面向 Unity 导出数据的游戏数值评估平台**
 
-## 功能特性
+评分看板、权重校准、模板一致性、关卡难度曲线、实时热更新、AI 辅助分析
 
-### 全量评估（ScoreDashboard）
-- **难度条**：EHP（蓝）+ DPS（橙）双色可视化
-- **右侧详情抽屉**：
-  - 综合评分、类型系数
-  - **特性标签**：元素抗性、被动Buff、DOT伤害、Buff控制（按特征动态显示）
-  - **DPS 分解**：堆叠条（橙=技能DPS，红=DOT DPS）+ 百分比
-  - **EHP 修正**：元素抗性因子 + 被动Buff因子
-  - **控制分解**：堆叠条（浅绿=技能控制，深绿=Buff控制）
-  - 归一化贡献（生存/输出/控制）
-- **异常检测**：DPS=0、生存/输出悬殊、控制满值时黄色警告
-- **关卡筛选**：下拉按关卡过滤
-- **添加到校准**：一键将怪物加入校准样本
+<p>
+  <a href="https://github.com/zgx197/DatumPlatform/actions/workflows/build-portable-exe.yml">
+    <img alt="Build Portable EXE" src="https://github.com/zgx197/DatumPlatform/actions/workflows/build-portable-exe.yml/badge.svg" />
+  </a>
+</p>
 
-### 权重校准（WeightCalibration）
-- **样本管理**：每行主观评分滑块 + 数值输入框可实时调整
-- **锚点色标**：简单/中等/困难（绿/橙/红）叠加在滑块
-- **保存到 calibration.json**：支持增删改样本，持久化到文件
-- **最小二乘法校准**：自动求解权重 + R²/MSE + 自然语言解释
-- **散点图**：主观 vs 预测评分，残差高亮
+<p>
+  <img alt="React 18" src="https://img.shields.io/badge/React-18-1f6feb?style=flat-square" />
+  <img alt="ASP.NET Core 9" src="https://img.shields.io/badge/ASP.NET_Core-9.0-0f766e?style=flat-square" />
+  <img alt="DatumCore" src="https://img.shields.io/badge/DatumCore-netstandard2.1-7c3aed?style=flat-square" />
+  <img alt="SignalR" src="https://img.shields.io/badge/SignalR-Live_Update-f59e0b?style=flat-square" />
+  <img alt="AI Assistant" src="https://img.shields.io/badge/AI-12_Tools-ec4899?style=flat-square" />
+  <img alt="Docs" src="https://img.shields.io/badge/Docs-Mermaid_%26_KaTeX-64748b?style=flat-square" />
+  <img alt="License" src="https://img.shields.io/badge/License-MIT-111827?style=flat-square" />
+</p>
 
-### 模板发现 & 评估（TemplateAnalysis）
-- **左侧列表导航**：类型/变种数/基准分/一致性状态（✓⚠）
-- **变种评分柱状图**：标准行灰色，高于橙色，低于蓝色，偏差%标注
-- **缩放曲线图**：属性缩放趋势 + 评分归一化曲线叠加对比
-- **一致性问题描述**：逐变种输出属性均值缩放、预期评分 vs 实际偏差%
+</div>
 
-### 健康报告（HealthReport）
-- **整体健康度**：圆形进度条（异常怪物-8分/条，模板问题-5分/条）
-- **全局统计**：模板数/已评估/一致性问题/异常怪物
-- **跨模板横向对比**：堆叠条形图（基准分 + 最高分溢出）
-- **一致性问题展开**：Collapse 逐模板展开，显示具体偏差描述
-- **跨模板对比表格**：基准分/最高分/缩放率/变种数/一致性状态
+| 维度 | 说明 |
+| --- | --- |
+| 核心定位 | 用 Unity 导出的 JSON 数据驱动数值分析，把“数据加载、评分计算、可视化、校准、解释”串成一条可迭代链路 |
+| 架构特征 | `datum-web`、`DatumServer`、`DatumCore` 三层解耦，其中 `DatumCore` 为 `netstandard2.1`，便于与 Unity 侧共享 |
+| 实时能力 | `FileWatcherService` 监听 `datum_export/*.json`，通过 SignalR 推送 `DataUpdated`，前端自动刷新查询结果 |
+| 适用对象 | 数值策划、战斗策划、技术策划、工具开发、平衡性分析和项目调试人员 |
 
-### 关卡分析（LevelView）
-- **总览柱状图**：各关卡总难度 + 峰值难度 + 怪物数折线对比
-- **关卡卡片**：总难度/怪物数/波次数/峰值难度一览
-- **难度曲线**：理论曲线（实线）vs 加速曲线（虚线）双 Y 轴（难度 + 存活数）
-- **怪物类型分布**：Boss / 精英 / 普通 饼图
-- **元素分布**：从技能蓝图 `DamageElement` 提取的真实元素统计饼图
-- **波次详情表格**：每波触发器、延迟、怪物数、波次难度、怪物构成
-- **指标卡片**：总难度、峰值难度、平均密度、持续时间、**难度弹性**（加速/理论峰值比）
-- **存活时间滑块**：5~120s 动态调整，实时联动后端重算
+> 如果你第一次打开这个仓库，建议先读“快速导航”和“阅读建议”，再进入后面的模块细节。
 
-### AI 智能助手
-- **侧边抽屉**：快捷键一键打开（默认 `Alt+A`），支持流式输出 + Markdown 渲染
-- **Function Calling**：12 个 Tool Functions，支持查询怪物评分、权重配置、关卡数据等
-- **多模型支持**：Kimi / OpenAI / DeepSeek / 自定义，API Key 存浏览器本地
-- **LaTeX 公式**：`remark-math` + `rehype-katex`，裸命令自动包裹预处理器，支持中文公式
-- **Mermaid 流程图**：代码块自动渲染为 SVG 流程图
-- **字体大小调节**：标题栏快捷切换 11~16px，设置页同步
+<a id="quick-links"></a>
+## 快速导航
 
-### Prompt 规则系统
-- **8 条内置规则**：LaTeX 公式、Mermaid 流程图、表格优先、中文回复、数据驱动、分步分析、异常高亮、简洁模式
-- **自定义规则**：新增 / 删除 / 开关管理
-- **动态注入**：启用的规则自动追加到 System Prompt
+- [这是什么](#what)
+- [功能亮点](#features)
+- [运行环境](#environment)
+- [怎么启动](#getting-started)
+- [CI 与下载](#ci-download)
+- [阅读建议](#reading-guide)
+- [核心分层与数据流](#architecture)
+- [关键目录](#repo-map)
+- [数据格式](#data-files)
+- [打包分发](#build)
 
-### 系统文档（FormulaDoc）
-- **KaTeX 公式渲染**：数学公式实时渲染
-- **Mermaid 流程图**：架构图、数据流程自动渲染
-- **Markdown 文档**：从 `docs/` 目录加载，支持 GFM 扩展
+<a id="what"></a>
+## 这是什么
 
-### 设置页（Settings）
-- **显示设置**：AI 聊天字体大小（全局 UI 偏好，双向同步）
-- **AI 模型配置**：多模型管理、API Key 安全存储
-- **快捷键管理**：7 个内置快捷键，可视化录入覆盖
-- **Prompt 规则**：规则列表 + 开关 + 自定义规则编辑
+`DatumPlatform` 是一个围绕 Unity 导出数据构建的数值评估工作台。它把 `datum_export/` 中的怪物、技能、Buff、模板、关卡等 JSON 数据加载到后端，通过 `DatumCore` 做评分与聚合，再交给 React 前端做可视化分析、参数校准和 AI 辅助解释。
 
-### 调试面板（DebugPanel）
-- **全局错误捕获**：console.error / warn / window.onerror / unhandledrejection
-- **一键导出**：JSON 格式错误报告，适合 AI 辅助分析
-- **噪音过滤**：自动过滤 KaTeX Unicode 警告等已知噪音
+这个仓库最有价值的地方不只是“把分数算出来”，而是把数值迭代中最常见的几个环节放在了同一个闭环里：
 
-## 快速开始
+- 看全量怪物评分，快速找异常点
+- 调权重并保存样本，校准评分模型
+- 看模板一致性，发现缩放或变种问题
+- 看关卡难度曲线，验证节奏和峰值
+- 用 AI 助手直接查询系统数据，辅助解释现象
 
-### 1. 数据准备
-在 Unity 项目中：
-```bash
-# 打开 Unity，菜单：Datum / Export Json
-# 选择输出目录（建议：d:\work\DatumPlatform\datum_export）
-# 点击「导出全部 JSON」
-```
+<a id="features"></a>
+## 功能亮点
 
-### 2. 一键启动（推荐）
+| 能力 | 说明 |
+| --- | --- |
+| 评分看板 `ScoreDashboard` | 展示全量怪物综合评分，支持 EHP / DPS / Control 分解、异常标记、关卡筛选、详情抽屉 |
+| 权重校准 `WeightCalibration` | 维护主观样本，执行最小二乘法校准，输出权重、`R²`、`MSE` 和解释文本 |
+| 模板分析 `TemplateAnalysis` | 以模板聚类方式查看变种评分、缩放趋势和一致性偏差 |
+| 健康报告 `HealthReport` | 汇总全局异常怪物与模板问题，给出整体健康度和跨模板对比 |
+| 关卡视图 `LevelView` | 分析总难度、峰值难度、波次详情、元素分布和难度弹性，支持存活时间滑块联动重算 |
+| AI 助手 `AiChatDrawer` | 支持流式输出、Markdown、KaTeX、Mermaid，并内置 12 个数据查询 Tool Functions |
+| 实时热更新 | JSON 数据变化后自动重载后端数据，并通过 `/hubs/datum` 推送前端刷新 |
+| 文档系统 `FormulaDoc` | 从 `docs/` 目录加载 Markdown 文档，支持 GFM、KaTeX 和 Mermaid 渲染 |
+| 版本更新提示 | `UpdateController` 提供版本检测与本地更新入口，前端头部显示更新 Banner |
+
+<a id="environment"></a>
+## 运行环境
+
+- `.NET 9 SDK`
+- `Node.js` 与 `npm`
+- Unity 项目导出的 JSON 数据目录 `datum_export/`
+- 推荐在 Windows + PowerShell 下使用 `dev.ps1`
+- 构建脚本支持 `win-x64`、`osx-arm64`、`linux-x64`
+
+开发默认地址：
+
+- Web: `http://localhost:5173`
+- API: `http://localhost:7000`
+- SignalR Hub: `http://localhost:7000/hubs/datum`
+
+<a id="getting-started"></a>
+## 怎么启动
+
+### 1. 准备数据
+
+在 Unity 项目中导出 JSON 到本仓库的 `datum_export/`，或指定任意自定义导出目录。
+
+### 2. 一键启动
 
 ```powershell
-# 在 DatumPlatform 根目录执行：
 .\dev.ps1
 
-# 指定数据目录：
+# 指定数据目录
 .\dev.ps1 -Data "D:\work\DatumPlatform\datum_export"
 
-# 跳过编译（代码未修改时，启动更快）：
-.\dev.ps1 -SkipBuild
-
-# 仅启动后端（用于调试 API）：
+# 仅启动后端
 .\dev.ps1 -BackendOnly
 
-# 仅启动前端（后端已单独运行）：
+# 仅启动前端
 .\dev.ps1 -FrontendOnly
+
+# 跳过后端编译
+.\dev.ps1 -SkipBuild
 ```
 
-`dev.ps1` 会自动：编译后端 → 启动后端服务（端口 7000）→ 启动前端开发服务器（端口 5173）→ 打开浏览器到关卡分析页面。
+`dev.ps1` 会自动完成这些事：
 
-### 2b. 手动启动（备选）
+1. 清理旧的前后端进程
+2. 构建 `DatumServer`
+3. 启动后端并检查 `/api/health`
+4. 启动 `datum-web` 开发服务器
+5. 同步 `docs/Datum_Formula_Reference.md` 到前端静态目录
+6. 自动打开 `http://localhost:5173/levels`
 
-**后端：**
-```bash
-cd d:\work\DatumPlatform\DatumServer
-dotnet run -- --data "d:\work\DatumPlatform\datum_export"
-# 访问：http://localhost:7000
+### 3. 手动启动
+
+后端：
+
+```powershell
+cd .\DatumServer
+dotnet run -- --data "D:\work\DatumPlatform\datum_export"
 ```
 
-**前端：**
-```bash
-cd d:\work\DatumPlatform\datum-web
+前端：
+
+```powershell
+cd .\datum-web
 npm install
 npm run dev
-# 访问：http://localhost:5173
 ```
 
-## 数据流
+<a id="ci-download"></a>
+## CI 与下载
 
+CI 工作流：
+
+- GitHub Actions: `Build Portable EXE`
+- 工作流地址: `https://github.com/zgx197/DatumPlatform/actions/workflows/build-portable-exe.yml`
+- 触发方式: `push main`、`pull_request -> main`、推送 `v*` 标签、手动触发
+
+如何下载构建产物：
+
+1. 打开仓库的 `Actions` 页面。
+2. 进入最新一次 `Build Portable EXE` 运行记录。
+3. 在页面底部的 `Artifacts` 区域下载 zip 包。
+
+如何下载正式发布包：
+
+1. 打开仓库的 `Releases` 页面。
+2. 推送与 `DatumServer/DatumServer.csproj` 中 `<Version>` 一致的标签，例如版本是 `1.0.0` 时推送 `v1.0.0`。
+3. CI 会自动创建或更新 Release，并上传对应 zip 附件。
+
+命名规则：
+
+- 版本号来源：`DatumServer/DatumServer.csproj` 的 `<Version>`
+- Release 名称：`DatumPlatform v<Version>`
+- 构建产物：`DatumPlatform-v<Version>-win-x64.zip`
+- 发布标签：`v<Version>`
+
+<a id="reading-guide"></a>
+## 阅读建议
+
+| 你现在最关心什么 | 建议先看 |
+| --- | --- |
+| 这个项目整体在做什么 | “这是什么” + “核心分层与数据流” |
+| 前端有哪些页面 | `datum-web/src/routes/AppRoutes.tsx` |
+| 前端怎么调后端数据 | `datum-web/src/api/datum.ts` |
+| 后端暴露了哪些接口 | `DatumServer/Controllers/` |
+| 数据变了为什么页面会自动刷新 | `DatumServer/Services/FileWatcherService.cs` + `datum-web/src/App.tsx` |
+| 评分、模板、关卡逻辑在哪里 | `DatumCore/` |
+| AI 助手能查什么 | `datum-web/src/services/aiTools.ts` |
+| 公式和设计文档在哪里 | `docs/` + `datum-web/src/pages/FormulaDoc/index.tsx` |
+| 如何本地打包给别人运行 | “打包分发” + `build.ps1` |
+
+<a id="architecture"></a>
+## 核心分层与数据流
+
+理解这个仓库，最简单的方式是把它看成三层：
+
+| 层 | 负责什么 | 对应目录 |
+| --- | --- | --- |
+| 数据入口层 | 承接 Unity 导出的 JSON 数据和配套文档 | `datum_export/`、`docs/` |
+| 服务与计算层 | 加载数据、计算评分、聚合模板与关卡结果、提供 REST / SignalR 接口 | `DatumServer/`、`DatumCore/` |
+| 展示与交互层 | 页面导航、图表可视化、参数校准、AI 助手、调试面板 | `datum-web/` |
+
+```mermaid
+flowchart LR
+    U[Unity Project] -->|Export Json| E[datum_export/*.json]
+    E --> S[DatumServer]
+    S --> C[DatumCore]
+    C --> S
+    S -->|REST API| W[datum-web]
+    S -->|SignalR DataUpdated| W
+    D[docs/*.md] -->|FormulaDoc| W
 ```
-Unity 项目 ──► Export Json ──► datum_export/*.json ──► DatumServer (JsonFoeDataProvider)
-    │
-    ▼
-DatumCore（计算核心，无 Unity 依赖）
-    │
-    ▼
-datum-web（React 前端）
+
+这条链路里有两个很关键的设计点：
+
+- `DatumCore` 不依赖 Unity，方便在服务端单独计算，也方便与 Unity 项目共享核心算法
+- 后端既提供 REST 数据读取，也负责监听文件变化并推送前端刷新，减少手动重启和重复操作
+
+### 页面地图
+
+| 路由 | 页面 | 用途 |
+| --- | --- | --- |
+| `/` | Score Dashboard | 看全量怪物评分、异常、详情 |
+| `/templates` | Template Analysis | 看模板一致性与缩放趋势 |
+| `/levels` | Level View | 看关卡难度、波次、元素分布 |
+| `/calibration` | Weight Calibration | 调样本、跑校准、更新权重 |
+| `/health` | Health Report | 看整体健康度与跨模板问题 |
+| `/docs` | Formula Doc | 阅读系统文档与公式参考 |
+| `/settings` | Settings | 管理 AI 配置、快捷键、Prompt 规则 |
+
+### 接口与实时机制
+
+当前前端主要通过这些接口工作：
+
+- `GET /api/health`
+- `GET /api/scores`、`POST /api/scores/recalc`
+- `GET /api/weights`、`PUT /api/weights`
+- `GET /api/templates`
+- `GET /api/calibration/samples`、`PUT /api/calibration/samples`、`POST /api/calibration/run`
+- `GET /api/levels/structures`、`GET /api/levels/metrics`
+- `GET /api/difficulty-tiers`
+- `GET /api/update/check`、`POST /api/update/apply`
+
+实时更新链路：
+
+1. `DatumServer` 启动时加载 `datum_export/`
+2. `FileWatcherService` 监听 `*.json`
+3. 数据变化后重新执行加载
+4. 通过 `/hubs/datum` 广播 `DataUpdated`
+5. 前端在 `App.tsx` 中失效相关 React Query 缓存并重新拉取数据
+
+<a id="repo-map"></a>
+## 关键目录
+
+```text
+DatumPlatform/
+├── datum-web/                  React + TypeScript + Ant Design + ECharts
+│   ├── src/pages/              评分、模板、关卡、校准、健康、设置、文档页面
+│   ├── src/components/         AI 抽屉、调试面板、更新提示、Mermaid 组件
+│   ├── src/services/           AI 配置、AI Tools、快捷键、Prompt 规则、UI 偏好
+│   └── src/api/                后端 REST API 客户端
+├── DatumServer/               ASP.NET Core 9 服务端
+│   ├── Controllers/           HTTP API
+│   ├── Services/              数据加载、文件监听
+│   ├── Hubs/                  SignalR Hub
+│   └── wwwroot/               前端构建产物
+├── DatumCore/                 评分与聚合核心算法
+│   ├── Aggregator/            综合评分聚合
+│   ├── Calibrator/            权重校准
+│   ├── Metrics/               指标计算
+│   ├── Provider/              JSON 数据提供者
+│   ├── Template/              模板发现与评估
+│   └── LevelAggregator/       关卡难度聚合
+├── datum_export/              Unity 导出的 JSON 数据
+├── docs/                      设计文档、公式参考、环境说明
+├── dev.ps1                    本地开发一键启动脚本
+└── build.ps1                  单文件发布脚本
 ```
 
-- **Unity → JSON**：`DatumExportPipeline` 读取 `HumanRobotTableData`、`SkillConfigAsset`、ScriptableObject 配置，导出为 JSON。
-- **JSON → Core**：`DatumServer` 启动时加载 JSON，通过 `JsonFoeDataProvider` 供给计算层。
-- **Core → Web**：REST API 返回结构化数据，前端渲染为交互式图表与表格。
+<a id="data-files"></a>
+## 数据格式
 
-## 开发指南
+`datum_export/` 中常见的文件包括：
 
-### 后端扩展
-- 新增 API：在 `DatumServer/Controllers` 添加 Controller，注入 `DatumDataService`。
-- 新增计算逻辑：在 `DatumCore` 下新增模块，保持无 Unity 依赖。
+- `monsters.json`: 怪物基础数据
+- `skill_info.json`: 技能基础配置
+- `skill_blueprints.json`: 技能蓝图与命中点
+- `buff_configs.json`: Buff 配置
+- `weight_config.json`: 当前评分权重
+- `calibration.json`: 主观校准样本
+- `templates.json`: 模板注册与聚类结果
+- `monster_scores.json`: 预计算评分结果
+- `level_structure.json`: 关卡结构、触发器和波次信息
 
-### 前端扩展
-- 新增页面：在 `src/pages` 添加组件，使用 `useQuery` 调用 `datumApi`。
-- 新增图表：使用 `echarts-for-react`，参考现有页面的 `option` 写法。
+字段约定：
 
-### 数据格式
-- **monsters.json**：怪物基础数据（`DatumFoeRow`，含 `PassiveSkillIds`）
-- **skill_info.json**：技能基础配置（`DatumSkillInfoRow`，含 `SelfEffectBuffIds`）
-- **skill_blueprints.json**：技能蓝图（`DatumSkillBlueprint` + `DatumHitPoint`，含 `DamageElement` + `AttachedBuffIds`）
-- **buff_configs.json**：Buff 配置（`DatumBuffConfigRow`，DOT/控制/效果组）
-- **weight_config.json**：权重配置（`WeightConfig`）
-- **calibration.json**：校准样本（`CalibrationSample`）
-- **templates.json**：模板注册表（`MonsterTemplate`）
-- **monster_scores.json**：预计算评分（`EntityScore`）
-- **level_structure.json**：关卡结构（`LevelStructure`，含触发器、波次、时间轴、预设怪物）
+- Unity 导出与后端反序列化主要使用 `snake_case`
+- 前端 TypeScript 类型和后端 DTO 尽量保持同构
+- 避免同一条链路里混用驼峰和下划线命名
 
-### 字段名约定
-- Unity 导出与后端反序列化采用 **snake_case**（如 `survival_weight`）
-- 前端 TypeScript 接口与后端 DTO 保持一致
-- 避免驼峰与下划线混用，减少映射错误
-
+<a id="build"></a>
 ## 打包分发
 
 ```powershell
-# 一键构建（产出单文件 exe + 前端 + 数据）
 .\build.ps1
 
-# 指定目标平台
+# 指定运行时
 .\build.ps1 -Runtime osx-arm64
 .\build.ps1 -Runtime linux-x64
 
@@ -224,13 +309,31 @@ datum-web（React 前端）
 .\build.ps1 -SkipFrontend
 ```
 
-产出 `publish/win-x64/DatumServer.exe`（~47 MB 单文件），双击即用，前端静态资源嵌入 `wwwroot/`。
+`build.ps1` 会：
+
+1. 构建前端并输出到 `DatumServer/wwwroot/`
+2. 还原 NuGet 包
+3. 发布单文件自包含可执行文件
+4. 复制或生成 `datum_export/`
+
+默认产物位于：
+
+- `publish/win-x64/DatumServer.exe`
+
+如果 `datum_export/` 不存在，脚本会生成占位 JSON，方便先验证程序链路，再替换为真实项目数据。
 
 ## 技术栈
 
-- **前端**：React 18 + TypeScript + Ant Design 5 + ECharts + TanStack Query
-- **AI 渲染**：remark-math + rehype-katex（LaTeX）、Mermaid（流程图）、ReactMarkdown（Markdown）
-- **后端**：ASP.NET Core 9 + System.Text.Json + SignalR + 文件监听
-- **计算核心**：C#（无 Unity 依赖），与 Unity 项目共享代码
-- **打包**：dotnet publish（单文件 self-contained exe）+ Vite build
-- **数据格式**：JSON（UTF‑8），字段名 snake_case
+- 前端：React 18、TypeScript、Ant Design 5、ECharts、TanStack Query、Zustand
+- AI 与文档渲染：React Markdown、KaTeX、Mermaid
+- 后端：ASP.NET Core 9、SignalR、System.Text.Json
+- 核心计算：C#、`netstandard2.1`
+- 构建：Vite、`dotnet publish`
+
+## 相关文档
+
+- `docs/Datum_Platform_Design.md`
+- `docs/Datum_Design.md`
+- `docs/Datum_Formula_Reference.md`
+- `docs/EnvironmentSetup.md`
+- `docs/ProjectSystems_Reference.md`

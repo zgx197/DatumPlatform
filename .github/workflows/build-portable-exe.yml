@@ -1,0 +1,118 @@
+﻿name: Build Portable EXE
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: portable-exe-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-windows-portable:
+    name: Build Windows Portable Package
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Read version metadata
+        id: metadata
+        shell: pwsh
+        run: |
+          [xml]$csproj = Get-Content 'DatumServer/DatumServer.csproj'
+          $version = $csproj.Project.PropertyGroup.Version | Select-Object -First 1
+
+          if ([string]::IsNullOrWhiteSpace($version)) {
+            throw "Version not found in DatumServer/DatumServer.csproj"
+          }
+
+          $runtime = 'win-x64'
+          $tagName = "v$version"
+          $releaseName = "DatumPlatform v$version"
+          $artifactName = "DatumPlatform-v$version-$runtime"
+          $zipName = "$artifactName.zip"
+
+          "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "tag_name=$tagName" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "release_name=$releaseName" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "artifact_name=$artifactName" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "zip_name=$zipName" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+
+      - name: Validate release tag matches csproj version
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: pwsh
+        run: |
+          $expectedTag = '${{ steps.metadata.outputs.tag_name }}'
+          $actualTag = '${{ github.ref_name }}'
+
+          if ($actualTag -ne $expectedTag) {
+            throw "Tag $actualTag does not match csproj version tag $expectedTag"
+          }
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: datum-web/package-lock.json
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Install frontend dependencies
+        shell: pwsh
+        working-directory: datum-web
+        run: npm ci
+
+      - name: Build self-contained EXE
+        shell: pwsh
+        run: .\build.ps1 -Runtime win-x64 -OutputDir "${{ github.workspace }}\publish\win-x64"
+
+      - name: Package portable bundle
+        id: package
+        shell: pwsh
+        run: |
+          $artifactRoot = Join-Path $env:GITHUB_WORKSPACE 'publish\win-x64'
+          $zipPath = Join-Path $env:GITHUB_WORKSPACE '${{ steps.metadata.outputs.zip_name }}'
+
+          if (-not (Test-Path $artifactRoot)) {
+            throw "Build output not found: $artifactRoot"
+          }
+
+          if (Test-Path $zipPath) {
+            Remove-Item -LiteralPath $zipPath -Force
+          }
+
+          Compress-Archive -Path "$artifactRoot\*" -DestinationPath $zipPath -Force
+          "zip_path=$zipPath" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+
+      - name: Upload CI artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.metadata.outputs.artifact_name }}
+          path: ${{ steps.package.outputs.zip_path }}
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Publish GitHub release asset
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.metadata.outputs.tag_name }}
+          name: ${{ steps.metadata.outputs.release_name }}
+          files: ${{ steps.package.outputs.zip_path }}
+          generate_release_notes: true
