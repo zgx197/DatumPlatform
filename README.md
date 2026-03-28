@@ -43,6 +43,7 @@
 - [运行环境](#environment)
 - [怎么启动](#getting-started)
 - [CI 与下载](#ci-download)
+- [下载包使用说明](#package-usage)
 - [阅读建议](#reading-guide)
 - [核心分层与数据流](#architecture)
 - [关键目录](#repo-map)
@@ -161,7 +162,7 @@ CI 工作流：
 如何下载正式发布包：
 
 1. 打开仓库的 `Releases` 页面。
-2. 推送与 `DatumServer/DatumServer.csproj` 中 `<Version>` 一致的标签，例如版本是 `1.0.0` 时推送 `v1.0.0`。
+2. 推送与 `DatumServer/DatumServer.csproj` 中 `<Version>` 一致的标签，例如版本是 `0.1.0` 时推送 `v0.1.0`。
 3. CI 会自动创建或更新 Release，并上传对应 zip 附件。
 
 命名规则：
@@ -170,6 +171,127 @@ CI 工作流：
 - Release 名称：`DatumPlatform v<Version>`
 - 构建产物：`DatumPlatform-v<Version>-win-x64.zip`
 - 发布标签：`v<Version>`
+
+<a id="package-usage"></a>
+## 下载包使用说明
+
+当前 Release 默认提供的是 Windows 便携包：`DatumPlatform-v<Version>-win-x64.zip`。它已经包含后端可执行文件、前端静态资源和一个可直接运行的 `datum_export/` 数据目录。
+
+### 1. 下载与解压
+
+1. 打开仓库的 `Releases` 页面并下载最新的 `DatumPlatform-v<Version>-win-x64.zip`。
+2. 把 zip **完整解压**到一个独立目录，例如 `D:\Apps\DatumPlatform\`。
+3. 不要直接在压缩包预览界面里双击运行 `DatumServer.exe`，否则程序可能找不到同目录的 `wwwroot/` 和 `datum_export/`。
+
+解压后的目录通常类似这样：
+
+```text
+DatumPlatform/
+├── DatumServer.exe
+├── wwwroot/
+├── datum_export/
+├── appsettings.json
+└── ...
+```
+
+### 2. 直接启动
+
+最简单的方式是双击：
+
+```text
+DatumServer.exe
+```
+
+或在 PowerShell 中启动：
+
+```powershell
+cd D:\Apps\DatumPlatform
+.\DatumServer.exe
+```
+
+程序启动后会默认读取当前目录下的 `datum_export/`，并监听：
+
+- Web / API: `http://localhost:7000`
+- SignalR Hub: `http://localhost:7000/hubs/datum`
+
+启动成功后，用浏览器打开：
+
+```text
+http://localhost:7000
+```
+
+### 3. 使用你自己的 Unity 导出数据
+
+如果你已经有自己的 Unity 导出 JSON，有两种接入方式。
+
+方式 A：直接替换包内的 `datum_export/`
+
+1. 保留目录名为 `datum_export`
+2. 用你的 JSON 文件覆盖解压目录中的同名文件
+3. 重新启动 `DatumServer.exe`
+
+方式 B：通过命令行指定外部数据目录
+
+```powershell
+cd D:\Apps\DatumPlatform
+.\DatumServer.exe --data "D:\YourProject\datum_export"
+```
+
+这种方式适合：
+
+- 不想改动发布包目录
+- 多个 Unity 项目共用同一套评估工具
+- 希望直接指向游戏工程导出的实时数据目录
+
+### 4. `datum_export/` 里至少应包含什么
+
+常见数据文件包括：
+
+- `monsters.json`
+- `skill_info.json`
+- `skill_blueprints.json`
+- `buff_configs.json`
+- `weight_config.json`
+- `calibration.json`
+- `templates.json`
+- `monster_scores.json`
+- `level_structure.json`
+
+如果某些文件缺失，部分页面可能能打开，但对应分析能力会缺数据或结果为空。
+
+### 5. 数据更新后的行为
+
+程序运行时会监听 `datum_export/*.json`。当你覆盖或修改这些 JSON 后，后端会自动重载数据，并通过 SignalR 推送前端刷新。
+
+这意味着：
+
+- 调整权重配置后，页面可以很快看到更新结果
+- Unity 再次导出 JSON 后，通常不需要手动重启程序
+- 如果你切换了整个数据目录，建议重启一次程序以确认路径正确
+
+### 6. 常见问题
+
+**双击后页面打不开**
+
+- 确认浏览器访问的是 `http://localhost:7000`
+- 确认没有被 Windows 防火墙或安全软件拦截
+- 确认 `7000` 端口没有被其他程序占用
+
+**程序能启动，但没有数据**
+
+- 确认当前目录下存在 `datum_export/`
+- 如果用了 `--data`，确认传入的是目录路径，不是单个 JSON 文件路径
+- 确认导出的 JSON 文件名与仓库约定一致
+
+**替换了数据但页面没变化**
+
+- 先确认文件确实写入到了正在使用的那个 `datum_export/`
+- 如果是整个目录被移动或替换，重启 `DatumServer.exe`
+
+**下载的是 Actions 里的 Artifact，不是 Release**
+
+- Artifact 更适合临时验证
+- 想给团队分发时，优先使用 `Releases` 页面里的正式 zip 包
 
 <a id="reading-guide"></a>
 ## 阅读建议
