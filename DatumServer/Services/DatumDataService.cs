@@ -25,7 +25,7 @@ namespace Datum.Server.Services
         private string _dataDir = string.Empty;
 
         public string DataDir => _dataDir;
-        public string Version => Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "1.0.0";
+        public string Version => Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "0.1.0";
 
         public void LoadFromDirectory(string dir)
         {

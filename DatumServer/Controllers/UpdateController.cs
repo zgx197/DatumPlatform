@@ -9,7 +9,7 @@ namespace Datum.Server.Controllers
     public class UpdateController : ControllerBase
     {
         private static readonly string CurrentVersion =
-            Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "1.0.0";
+            Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "0.1.0";
 
         [HttpGet("check")]
         public async Task<IActionResult> Check([FromQuery] string? versionFileUrl = null)
